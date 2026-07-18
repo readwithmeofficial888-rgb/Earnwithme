@@ -715,7 +715,7 @@
         alert("📋 Code Copied!");
     }
     function checkExchangeOfferCoins(amt) { showScreen('withdraw-screen'); }
-   function processInstantUPI(method) {
+   async function processInstantUPI(method) {
     const userDetail = prompt(`Enter ${method} ID for withdrawal:`);
     if (!userDetail) return;
 
@@ -725,9 +725,31 @@
         return alert("❌ Withdraw ke liye minimum 1000 coins hone chahiye!");
     }
 
-    alert("✅ Withdraw request success! Balance update ho gaya.");
-    document.getElementById('coin-balance').innerText = "0 Coins";
-    showScreen('dashboard');
+    try {
+        const response = await fetch('/api/withdraw', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                user_id: localStorage.getItem('user_id'),
+                amount: currentBalance,
+                method: method,
+                details: userDetail 
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            alert("✅ Withdraw request success! Balance update ho gaya.");
+            document.getElementById('coin-balance').innerText = "0 Coins";
+            showScreen('dashboard');
+        } else {
+            alert("❌ Server Error: " + result.message);
+        }
+    } catch (error) {
+        console.error("Withdrawal Error:", error);
+        alert("Withdrawal process failed. Server se connect nahi ho paya.");
+    }
 }
 
 function watchRewardAd() {
