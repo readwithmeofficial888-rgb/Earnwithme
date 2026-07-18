@@ -715,7 +715,7 @@
         alert("📋 Code Copied!");
     }
     function checkExchangeOfferCoins(amt) { showScreen('withdraw-screen'); }
-    function processInstantUPI(method) {
+   function processInstantUPI(method) {
     const userDetail = prompt(`Enter ${method} ID for withdrawal:`);
     if (!userDetail) return;
 
@@ -729,24 +729,19 @@
     document.getElementById('coin-balance').innerText = "0 Coins";
     showScreen('dashboard');
 }
-}
+
 function watchRewardAd() {
     alert("🎬 Rewarded Ad Finished!\n+20 Coins");
-    
-    // Database mein sync karne ke liye naya function call karein
     syncCoinsWithServer(20, "Rewarded Ad"); 
-    
     triggerAdNetworkSystem("Rewarded Ad");
 }
 
 function openSurvey() {
     alert("Survey Completed!\n+50 Coins");
-    
-    // Database sync karne ke liye ye line add karein
     syncCoinsWithServer(50, "Survey"); 
-    
     triggerAdNetworkSystem("Survey");
 }
+
 async function updateBalanceUI() {
     const userId = localStorage.getItem('user_id');
     if (userId) {
@@ -758,10 +753,11 @@ async function updateBalanceUI() {
         body: JSON.stringify({ user_id: userId })
     });
     const data = await res.json();
-    if(data.status === 'success') {
+    if (data.status === 'success') {
         document.getElementById('coin-balance').innerText = data.coins + " Coins";
     }
 }
+
 window.addEventListener('load', updateBalanceUI);
 async function syncCoinsWithServer(coinsToAdd, activityType) {
     const userId = localStorage.getItem('user_id');
