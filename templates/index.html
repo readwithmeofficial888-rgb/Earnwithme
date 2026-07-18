@@ -725,22 +725,26 @@
         return alert("❌ Withdraw ke liye minimum 1000 coins hone chahiye!");
     }
 
+    // Buttons ke naam se match kiya gaya hai
+    let withdrawData = {
+        user_id: localStorage.getItem('user_id'),
+        amount: currentBalance,
+        upi: (method === 'UPI Direct') ? userDetail : null,
+        phonepe: (method === 'PhonePe Number') ? userDetail : null,
+        paytm: (method === 'Paytm Number') ? userDetail : null
+    };
+
     try {
         const response = await fetch('/api/withdraw', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                user_id: localStorage.getItem('user_id'),
-                amount: currentBalance,
-                method: method,
-                details: userDetail 
-            })
+            body: JSON.stringify(withdrawData)
         });
 
         const result = await response.json();
 
         if (result.status === 'success') {
-            alert("✅ Withdraw request success! Balance update ho gaya.");
+            alert("✅ Withdrawal request success!");
             document.getElementById('coin-balance').innerText = "0 Coins";
             showScreen('dashboard');
         } else {
@@ -748,9 +752,10 @@
         }
     } catch (error) {
         console.error("Withdrawal Error:", error);
-        alert("Withdrawal process failed. Server se connect nahi ho paya.");
+        alert("Withdrawal process failed.");
     }
 }
+
 
 function watchRewardAd() {
     alert("🎬 Rewarded Ad Finished!\n+20 Coins");
