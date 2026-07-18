@@ -310,6 +310,9 @@
                 <div class="captcha-input-box"><input type="text" id="captcha-user-input" placeholder="Type here..." style="background:white;"></div>
             </div>
             <button id="captcha-btn" onclick="verifyCaptchaCode()" style="background:#0d9488;">Verify Captcha Code ✔</button>
+        <div id="captcha-timer-box" class="spin-timer-text" style="display:none; border-style:dashed;">
+    Next Captcha Unlocks In: <span id="captcha-countdown">00:00:00</span>
+</div>
         </div>
 
         <!-- MATH QUIZ ZONE -->
@@ -558,6 +561,9 @@
             let fb = (parseInt(document.getElementById('coin-balance').innerText) || 0) + winCoins;
             document.getElementById('coin-balance').innerText = `${fb} Coins`;
             scratchCardsLeft--;
+            if (scratchCardsLeft <= 0) {
+        startTaskTimer('Scratch', 24 * 60 * 60 * 1000, 'scratch-countdown', 'scratch-timer-box', 'scratch-box');
+    }
             document.getElementById('scratch-left-text').innerText = scratchCardsLeft;
             setTimeout(() => { box.classList.remove('revealed'); box.innerText = "Tap to Scratch Card 🎁"; isScratchingCard = false; }, 3000);
         }, 1500);
@@ -574,6 +580,9 @@
             let old = parseInt(document.getElementById('coin-balance').innerText) || 0;
             document.getElementById('coin-balance').innerText = `${old + reward} Coins`;
             spinsLeft--;
+            if (spinsLeft <= 0) {
+        startTaskTimer('Spin', 24 * 60 * 60 * 1000, 'spin-countdown', 'spin-timer-box', 'spin-btn');
+    }
             document.getElementById('spin-count-text').innerText = spinsLeft;
             isSpinning = false;
             triggerAdNetworkSystem('Lucky Spin Game');
@@ -601,6 +610,11 @@
         const input = document.getElementById('captcha-user-input').value.trim();
         if(input.toUpperCase() === activeCaptchaCode) {
             captchaCountLeft--;
+            
+        if (captchaCountLeft <= 0) {
+            startTaskTimer('Captcha', 24 * 60 * 60 * 1000, 'captcha-countdown', 'captcha-timer-box', 'captcha-btn');
+        }
+        document.getElementById('captcha-left-count').innerText = captchaCountLeft;
             alert("🎉 Correct! +5 Coins.");
             let cur = parseInt(document.getElementById('coin-balance').innerText) || 0;
             document.getElementById('coin-balance').innerText = `${cur + 5} Coins`;
@@ -789,7 +803,50 @@ async function syncCoinsWithServer(coinsToAdd, activityType) {
         console.error("Sync Error:", error);
     }
 }
+function startTaskTimer(taskName, durationMs, elementId, timerBoxId, buttonId) {
+    const expiry = Date.now() + durationMs;
+    localStorage.setItem(`${taskName}_UnlockTime`, expiry);
+    
+    // Timer shuru hote hi button disable kar dein
+    const btn = document.getElementById(buttonId);
+    if (btn) btn.disabled = true;
+    
+    document.getElementById(timerBoxId).style.display = 'block';
+    
+    const interval = setInterval(() => {
+        const diff = expiry - Date.now();
+        if (diff <= 0) {
+            clearInterval(interval);
+            document.getElementById(timerBoxId).style.display = 'none';
+            if (btn) btn.disabled = false;
+            localStorage.removeItem(`${taskName}_UnlockTime`);
+        } else {
+            let h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            let m = Math.floor((diff / 1000 / 60) % 60);
+            let s = Math.floor((diff / 1000) % 60);
+            document.getElementById(elementId).innerText = `${h}h ${m}m ${s}s`;
+        }
+    }, 1000);
+}
+window.addEventListener('load', () => {
+    // Captcha Timer Check
+    const captchaTime = localStorage.getItem('Captcha_UnlockTime');
+    if (captchaTime && Date.now() < parseInt(captchaTime)) {
+        startTaskTimer('Captcha', parseInt(captchaTime) - Date.now(), 'captcha-countdown', 'captcha-timer-box', 'captcha-btn');
+    }
 
+    // Spin Timer Check
+    const spinTime = localStorage.getItem('Spin_UnlockTime');
+    if (spinTime && Date.now() < parseInt(spinTime)) {
+        startTaskTimer('Spin', parseInt(spinTime) - Date.now(), 'spin-countdown', 'spin-timer-box', 'spin-btn');
+    }
+
+    // Scratch Timer Check
+    const scratchTime = localStorage.getItem('Scratch_UnlockTime');
+    if (scratchTime && Date.now() < parseInt(scratchTime)) {
+        startTaskTimer('Scratch', parseInt(scratchTime) - Date.now(), 'scratch-countdown', 'scratch-timer-box', 'scratch-box');
+    }
+});
 </script>
 </body>
 </html>
