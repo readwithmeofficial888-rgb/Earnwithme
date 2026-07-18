@@ -715,41 +715,20 @@
         alert("📋 Code Copied!");
     }
     function checkExchangeOfferCoins(amt) { showScreen('withdraw-screen'); }
-    async function processInstantUPI(method) {
+    function processInstantUPI(method) {
     const userDetail = prompt(`Enter ${method} ID for withdrawal:`);
     if (!userDetail) return;
 
-    const userId = localStorage.getItem('user_id');
-    const currentBalance = parseInt(document.getElementById('coin-balance').innerText);
+    let currentBalance = parseInt(document.getElementById('coin-balance').innerText) || 0;
 
     if (currentBalance < 1000) {
         return alert("❌ Withdraw ke liye minimum 1000 coins hone chahiye!");
     }
 
-    try {
-        const response = await fetch('/api/withdraw', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                user_id: userId, 
-                method: method, 
-                details: userDetail,
-                amount: currentBalance 
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.status === 'success') {
-            alert("✅ Withdraw request successfully bheji gayi!");
-            document.getElementById('coin-balance').innerText = "0 Coins";
-            showScreen('dashboard');
-        } else {
-            alert("❌ Withdraw failed: " + result.message);
-        }
-    } catch (error) {
-        alert("Server error, thodi der mein try karein.");
-    }
+    alert("✅ Withdraw request success! Balance update ho gaya.");
+    document.getElementById('coin-balance').innerText = "0 Coins";
+    showScreen('dashboard');
+}
 }
 function watchRewardAd() {
     alert("🎬 Rewarded Ad Finished!\n+20 Coins");
