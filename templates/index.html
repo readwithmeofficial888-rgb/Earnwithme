@@ -767,6 +767,29 @@ async function updateBalanceUI() {
     }
 }
 window.addEventListener('load', updateBalanceUI);
+async function syncCoinsWithServer(coinsToAdd, activityType) {
+    const userId = localStorage.getItem('user_id');
+    try {
+        const response = await fetch('/api/complete-activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                user_id: userId, 
+                coins: coinsToAdd, 
+                activity_type: activityType 
+            })
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+            document.getElementById('coin-balance').innerText = result.new_balance + " Coins";
+        } else {
+            alert("Error syncing coins: " + result.message);
+        }
+    } catch (error) {
+        console.error("Sync Error:", error);
+    }
+}
+
 </script>
 </body>
 </html>
