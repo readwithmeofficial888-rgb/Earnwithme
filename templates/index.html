@@ -294,7 +294,7 @@
             <div class="section-title" style="color:#b45309;">🎡 Lucky Spin Wheel</div>
             <div class="spin-stats">
                 <span>Spins Left: <span id="spin-count-text">7</span>/7</span>
-                <span>Max: 70 Coins 💰</span>
+                <span>Max: 35 Coins 💰</span>
             </div>
             <div class="wheel-container">
                 <div class="wheel-pointer"></div>
@@ -361,7 +361,7 @@
 
     <p style="font-size:13px;">
         Watch one rewarded advertisement and earn
-        <b>+20 Coins</b>.
+        <b>+5 Coins</b>.
     </p>
 
     <button onclick="watchRewardAd()" style="background:#0891b2;">
@@ -377,7 +377,7 @@
 
     <p style="font-size:13px;">
         Complete a survey and earn
-        <b>+50 Coins</b>.
+        <b>+5 Coins</b>.
     </p>
 
     <button onclick="openSurvey()" style="background:#16a34a;">
@@ -407,7 +407,7 @@
     let calendarTimerInterval = null;
     let spinsLeft = 7;
     let isSpinning = false;
-    const spinAwards = [10, 20, 30, 40, 50, 60, 70];
+    const spinAwards = [5, 10, 15, 20, 25, 30, 35];
     let scratchCardsLeft = 5;
     let isScratchingCard = false;
     let activeCaptchaCode = '';
@@ -759,13 +759,13 @@
 
 function watchRewardAd() {
     window.open("https://www.effectivecpmnetwork.com/av0hv1cyzf?key=0921a7d6afd7fb4c9c156a0c4b0f330f", "_blank");
-    syncCoinsWithServer(20, "Rewarded Ad"); 
+    syncCoinsWithServer(5, "Rewarded Ad"); 
     triggerAdNetworkSystem("Rewarded Ad");
 }
 
 function openSurvey() {
     window.open("https://www.effectivecpmnetwork.com/av0hv1cyzf?key=0921a7d6afd7fb4c9c156a0c4b0f330f", "_blank");
-    syncCoinsWithServer(50, "Survey"); 
+    syncCoinsWithServer(5, "Survey"); 
     triggerAdNetworkSystem("Survey");
 }
 
