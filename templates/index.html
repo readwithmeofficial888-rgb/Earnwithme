@@ -807,9 +807,15 @@ function startTaskTimer(taskName, durationMs, elementId, timerBoxId, buttonId) {
     const expiry = Date.now() + durationMs;
     localStorage.setItem(`${taskName}_UnlockTime`, expiry);
     
-    // Timer shuru hote hi button disable kar dein
-    const btn = document.getElementById(buttonId);
-    if (btn) btn.disabled = true;
+    const element = document.getElementById(buttonId);
+    if (element) {
+        if (element.tagName === 'BUTTON') {
+            element.disabled = true; // Buttons ke liye
+        } else {
+            element.style.pointerEvents = 'none'; // Div/Scratch ke liye
+            element.style.opacity = '0.5';
+        }
+    }
     
     document.getElementById(timerBoxId).style.display = 'block';
     
@@ -818,7 +824,14 @@ function startTaskTimer(taskName, durationMs, elementId, timerBoxId, buttonId) {
         if (diff <= 0) {
             clearInterval(interval);
             document.getElementById(timerBoxId).style.display = 'none';
-            if (btn) btn.disabled = false;
+            if (element) {
+                if (element.tagName === 'BUTTON') {
+                    element.disabled = false;
+                } else {
+                    element.style.pointerEvents = 'auto';
+                    element.style.opacity = '1';
+                }
+            }
             localStorage.removeItem(`${taskName}_UnlockTime`);
         } else {
             let h = Math.floor((diff / (1000 * 60 * 60)) % 24);
@@ -829,19 +842,21 @@ function startTaskTimer(taskName, durationMs, elementId, timerBoxId, buttonId) {
     }, 1000);
 }
 window.addEventListener('load', () => {
-    // Captcha Timer Check
+    updateBalanceUI(); // Sabse pehle balance load karein
+    
+    // Captcha Timer
     const captchaTime = localStorage.getItem('Captcha_UnlockTime');
     if (captchaTime && Date.now() < parseInt(captchaTime)) {
         startTaskTimer('Captcha', parseInt(captchaTime) - Date.now(), 'captcha-countdown', 'captcha-timer-box', 'captcha-btn');
     }
 
-    // Spin Timer Check
+    // Spin Timer
     const spinTime = localStorage.getItem('Spin_UnlockTime');
     if (spinTime && Date.now() < parseInt(spinTime)) {
         startTaskTimer('Spin', parseInt(spinTime) - Date.now(), 'spin-countdown', 'spin-timer-box', 'spin-btn');
     }
 
-    // Scratch Timer Check
+    // Scratch Timer (ID 'scratch-box' hi rehne dein)
     const scratchTime = localStorage.getItem('Scratch_UnlockTime');
     if (scratchTime && Date.now() < parseInt(scratchTime)) {
         startTaskTimer('Scratch', parseInt(scratchTime) - Date.now(), 'scratch-countdown', 'scratch-timer-box', 'scratch-box');
