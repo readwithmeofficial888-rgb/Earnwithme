@@ -96,21 +96,25 @@ def complete_activity():
 def withdraw_money():
     data = request.json
     user_id = data.get('user_id')
-    amount = data.get('amount')
+    amount = data.get('amount') # Example: 1000
     upi = data.get('upi')
-    phonepe = data.get('phonepe')
-
+    
     try:
+        # 1. Pehle current balance check karein
         res = supabase.table('profiles').select('coins').eq('user_id', user_id).execute()
-        if not res.data or res.data[0].get('coins', 0) < 1000:
-            return jsonify({"status": "error", "message": "Insufficient coins or user not found"}), 400
+        current_coins = res.data[0].get('coins', 0) if res.data else 0
 
-        supabase.table('profiles').update({'coins': 0}).eq('user_id', user_id).execute()
+        if current_coins < amount:
+            return jsonify({"status": "error", "message": "Insufficient coins"}), 400
 
+        # 2. Sirf withdrawal amount minus karein
+        new_balance = current_coins - amount
+        supabase.table('profiles').update({'coins': new_balance}).eq('user_id', user_id).execute()
+
+        # 3. Request log karein
         supabase.table('withdraw_requests').insert({
             'user_id': user_id,
             'upi': upi,
-            'phonepe': phonepe,
             'amount_requested': amount,
             'status': 'PENDING'
         }).execute()
