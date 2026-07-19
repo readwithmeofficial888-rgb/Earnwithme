@@ -876,11 +876,12 @@ function startTaskTimer(taskName, durationMs, elementId, timerBoxId, buttonId) {
         }
     }, 1000);
 }
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
     CURRENT_USER = localStorage.getItem('user_id') || '';
     if (!CURRENT_USER) return;
 
-    updateBalanceUI();
+    // Yahan AWAIT lagana sabse zaroori hai (YE FIX HAI)
+    await updateBalanceUI();
 
     // Spins Limit load karein
     const savedSpins = localStorage.getItem(CURRENT_USER + '_spinsLeft');
@@ -902,6 +903,11 @@ window.addEventListener('load', () => {
             startTaskTimer(task, parseInt(unlockTime) - Date.now(), countdownId, boxId, btnId);
         }
     });
+    
+    // Additional initializations
+    initDailyCalendarEngine();
+    generateCaptchaCode();
+    checkQuizLockStatus();
 });
 
 </script>
