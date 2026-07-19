@@ -79,6 +79,9 @@ def complete_activity():
         return jsonify({"status": "error", "message": "User ID missing"}), 400
 
     clean_uid = get_clean_uid(uid)
+    # Ye dono lines add kardo
+    print(f"DEBUG: Input UID: '{uid}'")
+    print(f"DEBUG: Clean UID: '{clean_uid}'")
 
     try:
         profile = supabase.table('profiles').select('coins').eq('user_id', clean_uid).execute()
