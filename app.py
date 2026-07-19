@@ -66,8 +66,8 @@ def get_balance():
 @app.route('/api/complete-activity', methods=['POST'])
 def complete_activity():
     data = request.json
-    user_id = data.get('user_id')
-    coins_to_add = data.get('coins', 0)
+    user_id = data.get('user_id', '').strip()
+    coins_to_add = int(data.get('coins', 0))
     activity_type = data.get('activity_type')
     
     if not user_id:
@@ -86,7 +86,7 @@ def complete_activity():
         current_coins = int(profile.data[0]['coins'])
         new_balance = current_coins + int(coins_to_add)
 
-        supabase.table('profiles').update({
+        update = supabase.table('profiles').update({
             'coins': new_balance
         }).eq('user_id', user_id).execute()
 
