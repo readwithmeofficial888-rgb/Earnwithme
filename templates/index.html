@@ -239,7 +239,7 @@
             <h4 id="welcome-msg">Welcome User</h4>
             <h3>Aapka Balance</h3>
             <div class="balance-container">
-                <h2 id="coin-balance">0 Coins</h2>
+                <h2 id="coin-balance">Loading...</h2>
                 <button class="withdraw-trigger-btn" onclick="showScreen('withdraw-screen')">Withdraw 💰</button>
             </div>
         </div>
@@ -782,19 +782,31 @@ function openSurvey() {
 
 async function updateBalanceUI() {
     const userId = localStorage.getItem('user_id');
+    const balanceElement = document.getElementById('coin-balance');
+    
     if (userId) {
         document.getElementById('my-refer-code').innerText = "CGP" + userId.replace('+', '').slice(-5);
-    }
-    const res = await fetch('/api/get-balance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId })
-    });
-    const data = await res.json();
-    if (data.status === 'success') {
-        document.getElementById('coin-balance').innerText = data.coins + " Coins";
+        balanceElement.innerText = "Loading..."; // Pehle loading dikhayega
+        
+        try {
+            const res = await fetch('/api/get-balance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                balanceElement.innerText = data.coins + " Coins";
+            } else {
+                balanceElement.innerText = "0 Coins";
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            balanceElement.innerText = "0 Coins";
+        }
     }
 }
+
 
 window.addEventListener('load', updateBalanceUI);
 async function syncCoinsWithServer(coinsToAdd, activityType) {
