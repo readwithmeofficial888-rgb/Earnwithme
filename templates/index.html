@@ -784,26 +784,33 @@ async function updateBalanceUI() {
     const userId = localStorage.getItem('user_id');
     const balanceElement = document.getElementById('coin-balance');
     
-    if (userId) {
-        document.getElementById('my-refer-code').innerText = "CGP" + userId.replace('+', '').slice(-5);
-        balanceElement.innerText = "Loading..."; // Pehle loading dikhayega
+    if (!userId) return;
+
+    // Refer code update (UI ke liye)
+    document.getElementById('my-refer-code').innerText = "CGP" + userId.replace('+', '').slice(-5);
+    balanceElement.innerText = "Loading...";
+
+    try {
+        const res = await fetch('/api/get-balance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId })
+        });
         
-        try {
-            const res = await fetch('/api/get-balance', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId })
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-                balanceElement.innerText = data.coins + " Coins";
-            } else {
-                balanceElement.innerText = "0 Coins";
-            }
-        } catch (error) {
-            console.error("Error:", error);
-            balanceElement.innerText = "0 Coins";
+        const data = await res.json();
+        
+        // DEBUGGING KE LIYE: Isse console mein check karo
+        console.log("Server Response:", data); 
+
+        if (data.status === 'success') {
+            balanceElement.innerText = data.coins + " Coins";
+        } else {
+            // Error hone par '0' ke bajaye message dikhao taaki pata chale
+            balanceElement.innerText = "Error: " + (data.message || "Fetch Failed");
         }
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        balanceElement.innerText = "Check Connection";
     }
 }
 
