@@ -86,9 +86,10 @@ def complete_activity():
         current_coins = int(profile.data[0]['coins'])
         new_balance = current_coins + int(coins_to_add)
 
-        update = supabase.table('profiles').update({
-            'coins': new_balance
-        }).eq('user_id', user_id).execute()
+        supabase.rpc('add_coins', {
+            'uid': user_id,
+            'amount': int(coins_to_add)
+        }).execute()
 
         # 👇 Iske baad tumhara ye code waise hi rahega
         supabase.table('user_activities').insert({
