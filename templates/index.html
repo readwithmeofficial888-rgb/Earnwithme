@@ -454,6 +454,7 @@
         if (result.status === 'success') {
             // 4. Successful login: ID save karein aur Dashboard dikhayein
             localStorage.setItem('user_id', result.user.user_id);
+            CURRENT_USER = result.user.user_id;
             
             showScreen('dashboard');
             document.getElementById('welcome-msg').innerText = `Welcome, ${result.user.name}`;
@@ -543,6 +544,10 @@
                 clearInterval(calendarTimerInterval);
                 document.getElementById('calendar-timer-box').style.display = 'none';
                 updateCalendarUI();
+                if (typeof calendarLimits !== 'undefined') {
+    calendarLimits = 1; // Ya jitni bhi aapki initial limit hai
+    localStorage.setItem(`calendarLimits_${CURRENT_USER}`, calendarLimits);
+}
             } else {
                 let h = Math.floor((diff / (1000 * 60 * 60)) % 24);
                 let m = Math.floor((diff / 1000 / 60) % 60);
@@ -563,10 +568,15 @@
             box.innerText = `🎉 Won +${winCoins} Coins!`;
             let fb = (parseInt(document.getElementById('coin-balance').innerText) || 0) + winCoins;
             document.getElementById('coin-balance').innerText = `${fb} Coins`;
+            
+            // Naya code yahan se replace karein
             scratchCardsLeft--;
+            localStorage.setItem(CURRENT_USER + '_scratchLeft', scratchCardsLeft);
             if (scratchCardsLeft <= 0) {
-        startTaskTimer('Scratch', 24 * 60 * 60 * 1000, 'scratch-countdown', 'scratch-timer-box', 'scratch-box');
-    }
+                startTaskTimer('Scratch', 24 * 60 * 60 * 1000, 'scratch-countdown', 'scratch-timer-box', 'scratch-box');
+            }
+            // Yahan tak replace karein
+    
             document.getElementById('scratch-left-text').innerText = scratchCardsLeft;
             setTimeout(() => { box.classList.remove('revealed'); box.innerText = "Tap to Scratch Card 🎁"; isScratchingCard = false; }, 3000);
         }, 1500);
@@ -583,6 +593,7 @@
             let old = parseInt(document.getElementById('coin-balance').innerText) || 0;
             document.getElementById('coin-balance').innerText = `${old + reward} Coins`;
             spinsLeft--;
+            localStorage.setItem(CURRENT_USER + '_spinsLeft', spinsLeft);
             if (spinsLeft <= 0) {
         startTaskTimer('Spin', 24 * 60 * 60 * 1000, 'spin-countdown', 'spin-timer-box', 'spin-btn');
     }
@@ -810,7 +821,7 @@ async function syncCoinsWithServer(coinsToAdd, activityType) {
 }
 function startTaskTimer(taskName, durationMs, elementId, timerBoxId, buttonId) {
     const expiry = Date.now() + durationMs;
-    localStorage.setItem(`${taskName}_UnlockTime`, expiry);
+    localStorage.setItem(CURRENT_USER + '_' + taskName + '_UnlockTime', expiry);
     
     const element = document.getElementById(buttonId);
     if (element) {
@@ -837,7 +848,7 @@ function startTaskTimer(taskName, durationMs, elementId, timerBoxId, buttonId) {
                     element.style.opacity = '1';
                 }
             }
-            localStorage.removeItem(`${taskName}_UnlockTime`);
+            localStorage.removeItem(CURRENT_USER + '_' + taskName + '_UnlockTime');
         } else {
             let h = Math.floor((diff / (1000 * 60 * 60)) % 24);
             let m = Math.floor((diff / 1000 / 60) % 60);
@@ -847,29 +858,35 @@ function startTaskTimer(taskName, durationMs, elementId, timerBoxId, buttonId) {
     }, 1000);
 }
 window.addEventListener('load', () => {
-    updateBalanceUI(); // Sabse pehle balance load karein
-    
-    // Captcha Timer
-    const captchaTime = localStorage.getItem('Captcha_UnlockTime');
-    if (captchaTime && Date.now() < parseInt(captchaTime)) {
-        startTaskTimer('Captcha', parseInt(captchaTime) - Date.now(), 'captcha-countdown', 'captcha-timer-box', 'captcha-btn');
-    }
+    CURRENT_USER = localStorage.getItem('user_id') || '';
+    if (!CURRENT_USER) return;
 
-    // Spin Timer
-    const spinTime = localStorage.getItem('Spin_UnlockTime');
-    if (spinTime && Date.now() < parseInt(spinTime)) {
-        startTaskTimer('Spin', parseInt(spinTime) - Date.now(), 'spin-countdown', 'spin-timer-box', 'spin-btn');
-    }
+    updateBalanceUI();
 
-    // Scratch Timer (ID 'scratch-box' hi rehne dein)
-    const scratchTime = localStorage.getItem('Scratch_UnlockTime');
-    if (scratchTime && Date.now() < parseInt(scratchTime)) {
-        startTaskTimer('Scratch', parseInt(scratchTime) - Date.now(), 'scratch-countdown', 'scratch-timer-box', 'scratch-box');
-    }
+    // Spins Limit load karein
+    const savedSpins = localStorage.getItem(CURRENT_USER + '_spinsLeft');
+    spinsLeft = savedSpins !== null ? parseInt(savedSpins) : 7;
+    document.getElementById('spin-count-text').innerText = spinsLeft;
+
+    // Scratch Limit load karein
+    const savedScratch = localStorage.getItem(CURRENT_USER + '_scratchLeft');
+    scratchCardsLeft = savedScratch !== null ? parseInt(savedScratch) : 5;
+    document.getElementById('scratch-left-text').innerText = scratchCardsLeft;
+
+    // Sabhi Timers check karein
+    ['Captcha', 'Spin', 'Scratch'].forEach(task => {
+        const unlockTime = localStorage.getItem(CURRENT_USER + '_' + task + '_UnlockTime');
+        if (unlockTime && Date.now() < parseInt(unlockTime)) {
+            const boxId = task.toLowerCase() + '-timer-box';
+            const countdownId = task.toLowerCase() + '-countdown';
+            const btnId = (task === 'Scratch') ? 'scratch-box' : (task.toLowerCase() + '-btn');
+            startTaskTimer(task, parseInt(unlockTime) - Date.now(), countdownId, boxId, btnId);
+        }
+    });
 });
+
 </script>
 <script src="https://pl30419707.effectivecpmnetwork.com/14/be/19/14be1995fcca2039ec772bb1f54c3d15.js"></script>
 
 </body>
 </html>
- 
