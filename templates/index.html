@@ -518,22 +518,23 @@
     }
 
     function claimDailyReward(dayNum, coinsReward) {
-        const nextUnlockTime = localStorage.getItem(`calendarUnlockTime_${CURRENT_USER}`);
-        if (nextUnlockTime && Date.now() < parseInt(nextUnlockTime)) return alert("🚨 Agla check-in locked hai!");
-        if (dayNum !== currentStreakDay) return alert(`🚨 Pehle Day ${currentStreakDay} claim karein.`);
-        
-        alert(`🎉 Day ${dayNum} Claimed! +${coinsReward} Coins!`);
-        let fakeBal = (parseInt(document.getElementById('coin-balance').innerText) || 0) + coinsReward;
-        document.getElementById('coin-balance').innerText = `${fakeBal} Coins`;
-        
-        currentStreakDay++;
-        localStorage.setItem(`calendarStreak_${CURRENT_USER}`, currentStreakDay);
-        const nextUnlockTimestamp = Date.now() + (24 * 60 * 60 * 1000);
-        localStorage.setItem(`calendarUnlockTime_${CURRENT_USER}`, nextUnlockTimestamp);
-        
-        startCalendarLockTimer(nextUnlockTimestamp);
-        updateCalendarUI();
-    }
+    const nextUnlockTime = localStorage.getItem(`calendarUnlockTime_${CURRENT_USER}`);
+    if (nextUnlockTime && Date.now() < parseInt(nextUnlockTime)) return alert("🚨 Agla check-in locked hai!");
+    if (dayNum !== currentStreakDay) return alert(`🚨 Pehle Day ${currentStreakDay} claim karein.`);
+    
+    alert(`🎉 Day ${dayNum} Claimed! +${coinsReward} Coins!`);
+    
+    // YE LINE ADD KAREIN: Database par coins bhejne ke liye
+    syncCoinsWithServer(coinsReward, `Daily Check-in Day ${dayNum}`);
+    
+    currentStreakDay++;
+    localStorage.setItem(`calendarStreak_${CURRENT_USER}`, currentStreakDay);
+    const nextUnlockTimestamp = Date.now() + (24 * 60 * 60 * 1000);
+    localStorage.setItem(`calendarUnlockTime_${CURRENT_USER}`, nextUnlockTimestamp);
+    
+    startCalendarLockTimer(nextUnlockTimestamp);
+    updateCalendarUI();
+}
 
     function startCalendarLockTimer(ts) {
         document.getElementById('calendar-timer-box').style.display = 'block';
@@ -566,16 +567,15 @@
             const winCoins = Math.floor(Math.random() * 30) + 5; 
             box.classList.add('revealed');
             box.innerText = `🎉 Won +${winCoins} Coins!`;
-            let fb = (parseInt(document.getElementById('coin-balance').innerText) || 0) + winCoins;
-            document.getElementById('coin-balance').innerText = `${fb} Coins`;
             
-            // Naya code yahan se replace karein
+            // YE LINE ADD KAREIN: Database par coins bhejne ke liye
+            syncCoinsWithServer(winCoins, "Scratch Card");
+
             scratchCardsLeft--;
             localStorage.setItem(CURRENT_USER + '_scratchLeft', scratchCardsLeft);
             if (scratchCardsLeft <= 0) {
                 startTaskTimer('Scratch', 24 * 60 * 60 * 1000, 'scratch-countdown', 'scratch-timer-box', 'scratch-box');
             }
-            // Yahan tak replace karein
     
             document.getElementById('scratch-left-text').innerText = scratchCardsLeft;
             setTimeout(() => { box.classList.remove('revealed'); box.innerText = "Tap to Scratch Card 🎁"; isScratchingCard = false; }, 3000);
@@ -590,13 +590,15 @@
         document.getElementById('wheel-element').style.transform = `rotate(${3600 + (idx * 51.4)}deg)`;
         setTimeout(() => {
             alert(`🎉 Spin Result: Jeete ${reward} Coins!`);
-            let old = parseInt(document.getElementById('coin-balance').innerText) || 0;
-            document.getElementById('coin-balance').innerText = `${old + reward} Coins`;
+            
+            // YE LINE ADD KAREIN: Database par coins bhejne ke liye
+            syncCoinsWithServer(reward, "Lucky Spin");
+
             spinsLeft--;
             localStorage.setItem(CURRENT_USER + '_spinsLeft', spinsLeft);
             if (spinsLeft <= 0) {
-        startTaskTimer('Spin', 24 * 60 * 60 * 1000, 'spin-countdown', 'spin-timer-box', 'spin-btn');
-    }
+                startTaskTimer('Spin', 24 * 60 * 60 * 1000, 'spin-countdown', 'spin-timer-box', 'spin-btn');
+            }
             document.getElementById('spin-count-text').innerText = spinsLeft;
             isSpinning = false;
             triggerAdNetworkSystem('Lucky Spin Game');
@@ -625,13 +627,15 @@
         if(input.toUpperCase() === activeCaptchaCode) {
             captchaCountLeft--;
             
-        if (captchaCountLeft <= 0) {
-            startTaskTimer('Captcha', 24 * 60 * 60 * 1000, 'captcha-countdown', 'captcha-timer-box', 'captcha-btn');
-        }
-        document.getElementById('captcha-left-count').innerText = captchaCountLeft;
+            if (captchaCountLeft <= 0) {
+                startTaskTimer('Captcha', 24 * 60 * 60 * 1000, 'captcha-countdown', 'captcha-timer-box', 'captcha-btn');
+            }
+            document.getElementById('captcha-left-count').innerText = captchaCountLeft;
             alert("🎉 Correct! +5 Coins.");
-            let cur = parseInt(document.getElementById('coin-balance').innerText) || 0;
-            document.getElementById('coin-balance').innerText = `${cur + 5} Coins`;
+            
+            // YE LINE ADD KAREIN: Database par coins bhejne ke liye
+            syncCoinsWithServer(5, "Captcha Solver");
+
             triggerAdNetworkSystem('Captcha Verification');
             generateCaptchaCode();
         } else {
@@ -692,13 +696,15 @@
         alert(`🏁 Completed! Earned +${totalSessionCoins} Coins!
 
 🚨 Quiz has been locked for 24 Hours.`);
+
+        // YE LINE ADD KAREIN: Database par total coins bhejne ke liye
+        if (totalSessionCoins > 0) {
+            syncCoinsWithServer(totalSessionCoins, "Math Quiz");
+        }
+
         const expiry = Date.now() + (24 * 60 * 60 * 1000);
         localStorage.setItem(`quizLockUntil_${CURRENT_USER}`, expiry);
-        document.getElementById('quiz-input-area').style.display = 'none';
-        document.getElementById('quiz-q-counter').style.display = 'none';
-        document.getElementById('quiz-timer-box').style.display = 'none';
-        document.getElementById('quiz-question-text').innerText = 'Locked for 1 Day!';
-        startQuizLockCountdown(expiry);
+        // ... baki code wahi rahega
     }
 
     function startQuizLockCountdown(ts) {
