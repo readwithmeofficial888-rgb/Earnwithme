@@ -79,21 +79,17 @@ def complete_activity():
         return jsonify({"status": "error", "message": "User ID missing"}), 400
 
     clean_uid = get_clean_uid(uid)
-    # Ye dono lines add kardo
     print(f"DEBUG: Input UID: '{uid}'")
     print(f"DEBUG: Clean UID: '{clean_uid}'")
 
     try:
-        profile = supabase.table('profiles').select('coins').eq('user_id', clean_uid).execute()
-
-        if not profile.data:
-            return jsonify({"status": "error", "message": "User not found"}), 404
-
-        # Update coins via RPC
-        supabase.rpc('add_coins', {
+        # Update coins via RPC directly (yeh function ab auto-insert bhi kar dega agar user nahi hoga)
+        rpc_res = supabase.rpc('add_coins', {
             'uid': clean_uid,
             'amount': coins_to_add
         }).execute()
+        
+        print(f"DEBUG: RPC Response Data: {rpc_res.data}")
 
         # Log activity
         supabase.table('user_activities').insert({
@@ -103,11 +99,12 @@ def complete_activity():
 
         # Fetch updated balance
         res = supabase.table('profiles').select('coins').eq('user_id', clean_uid).execute()
-        new_balance = res.data[0]['coins'] if res.data else 0
+        new_balance = res.data[0]['coins'] if res.data else coins_to_add
 
         return jsonify({"status": "success", "new_balance": new_balance})
 
     except Exception as e:
+        print(f"ERROR in complete_activity: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/withdraw', methods=['POST'])
