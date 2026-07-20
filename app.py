@@ -1,6 +1,6 @@
 import os
 import re
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -18,6 +18,13 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 def get_clean_uid(uid):
     uid = str(uid).strip()
     return uid if uid.startswith('+') else '+' + uid
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory('.', 'manifest.json')
+
+@app.route('/sw.js')
+def serve_sw():
+    return send_from_directory('.', 'sw.js')
 
 @app.route('/')
 def home():
