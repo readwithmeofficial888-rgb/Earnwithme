@@ -120,6 +120,8 @@ def withdraw_money():
     uid = data.get('user_id')
     amount = data.get('amount')
     upi = data.get('upi')
+    phonepe = data.get('phonepe')
+    paypal = data.get('paypal')  # 🌍 PayPal ID yahan capture hogi
     
     clean_uid = get_clean_uid(uid)
 
@@ -130,6 +132,8 @@ def withdraw_money():
             supabase.table('withdraw_requests').insert({
                 'user_id': clean_uid,
                 'upi': upi,
+                'phonepe': phonepe,
+                'paypal': paypal,  # 🌍 Supabase database table mein 'paypal' column hona zaroori hai
                 'amount_requested': amount,
                 'status': 'PENDING'
             }).execute()
