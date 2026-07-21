@@ -271,6 +271,7 @@
             </div>
         </div>
 
+
         <!-- DAILY REWARD CALENDAR -->
         <div class="app-section">
             <div class="section-title">🗓️ Daily Reward Calendar</div>
@@ -397,6 +398,7 @@
         <h3 style="margin-top:0; font-size:16px;">Select Payout Gateway</h3>
         <div class="method-card" onclick="processInstantUPI('UPI Direct')"><span class="method-title">🌐 Instant UPI ID</span><button>Select</button></div>
         <div class="method-card" onclick="processInstantUPI('PhonePe Number')"><span class="method-title">📱 PhonePe Wallet</span><button>Select</button></div>
+        <div class="method-card" onclick="processInstantUPI('PayPal ID')"><span class="method-title">🌍 PayPal Email / ID</span><button>Select</button></div>
         <button class="back-btn" onclick="showScreen('dashboard')">⬅ Back to Dashboard</button>
     </div>
 </div>
@@ -750,13 +752,13 @@
         return alert("❌ Withdraw ke liye minimum 1000 coins hone chahiye!");
     }
 
-    // Buttons ke naam se match kiya gaya hai
+    // Buttons ke naam aur backend fields ke mutabiq update kiya gaya hai
     let withdrawData = {
         user_id: localStorage.getItem('user_id'),
         amount: currentBalance,
         upi: (method === 'UPI Direct') ? userDetail : null,
         phonepe: (method === 'PhonePe Number') ? userDetail : null,
-        paytm: (method === 'Paytm Number') ? userDetail : null
+        paypal: (method === 'PayPal ID') ? userDetail : null
     };
 
     try {
