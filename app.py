@@ -114,6 +114,47 @@ def complete_activity():
         print(f"ERROR in complete_activity: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/api/claim-reward', methods=['POST'])
+def claim_reward():
+    data = request.json
+    uid = data.get('user_id')
+    minutes_claimed = int(data.get('minutes_claimed', 0))
+    
+    if not uid:
+        return jsonify({"status": "error", "message": "User ID missing"}), 400
+        
+    clean_uid = get_clean_uid(uid)
+    
+    # Kitne coins milne chahiye uske hisab se logic
+    coins_map = {60: 100, 120: 120}
+    coins_to_add = coins_map.get(minutes_claimed, 0)
+    
+    if coins_to_add == 0:
+        return jsonify({"status": "error", "message": "Invalid reward duration"}), 400
+
+    try:
+        # Supabase RPC function ka use karke coins add karein (jo aap pehle se use kar rahe hain)
+        rpc_res = supabase.rpc('add_coins', {
+            'uid': clean_uid,
+            'amount': coins_to_add
+        }).execute()
+        
+        # Activity log store karna chahein toh (Optional)
+        supabase.table('user_activities').insert({
+            'user_id': clean_uid,
+            'activity_type': f'active_time_{minutes_claimed}m'
+        }).execute()
+
+        return jsonify({
+            "status": "success", 
+            "message": "Reward claimed successfully!",
+            "coins_added": coins_to_add
+        })
+
+    except Exception as e:
+        print(f"ERROR in claim_reward: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/api/withdraw', methods=['POST'])
 def withdraw_money():
     data = request.json
