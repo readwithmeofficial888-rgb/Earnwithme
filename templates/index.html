@@ -130,6 +130,20 @@
         .day-card.locked::after { content: "🔒"; position: absolute; top: 2px; right: 5px; font-size: 9px; }
         .calendar-timer-text { font-size: 12px; color: var(--danger); font-weight: 600; margin-top: 12px; text-align: center; display: none; background: #fee2e2; padding: 6px; border-radius: 8px; }
 
+<!-- DAILY USAGE REWARD CARD -->
+        <div class="app-section" style="flex-direction: column; align-items: flex-start; background: rgba(255,255,255,0.05); border: 1px solid var(--primary);">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 8px;">
+                <span class="section-title" style="margin-bottom:0;">⏳ Daily Active Time Reward</span>
+                <span id="reward-status-badge" style="font-size: 11px; padding: 3px 8px; background: #ff9800; color: #000; border-radius: 4px; font-weight: bold;">Loading...</span>
+            </div>
+            <p id="usage-timer-text" style="font-size: 13px; color: var(--text-muted); margin: 0 0 10px 0;">App use time tracked: <strong id="active-time-display">0m</strong></p>
+            
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <button id="claim-1hr-btn" onclick="claimUsageReward(60)" style="flex:1; padding: 8px; background: #555; border: none; color: white; border-radius: 5px; cursor: not-allowed;" disabled>Claim 100 Coins (1h)</button>
+                <button id="claim-2hr-btn" onclick="claimUsageReward(120)" style="flex:1; padding: 8px; background: #555; border: none; color: white; border-radius: 5px; cursor: not-allowed;" disabled>Claim 120 Coins (2h)</button>
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 6px;">* Resets daily universally at 7:00 AM IST</div>
+        </div>
         /* 🎡 LUCKY SPIN WHEEL */
         .spin-section { background: #fffbeb; border: 1px solid #fef3c7; }
         .spin-stats { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #b45309; margin-bottom: 12px; }
@@ -925,7 +939,72 @@ window.addEventListener('load', async () => {
     generateCaptchaCode();
     checkQuizLockStatus();
 });
+// --- DAILY USAGE REWARD LOGIC ---
+let sessionActiveSeconds = 0;
+let totalActiveMinutesToday = 0;
 
+// Har second active time count karne ke liye
+setInterval(() => {
+    if (!document.hidden && CURRENT_USER) {
+        sessionActiveSeconds++;
+        if (sessionActiveSeconds >= 60) {
+            sessionActiveSeconds = 0;
+            totalActiveMinutesToday++;
+            updateUsageUI();
+        }
+    }
+}, 1000);
+
+function updateUsageUI() {
+    const timeDisplay = document.getElementById('active-time-display');
+    if(timeDisplay) timeDisplay.innerText = totalActiveMinutesToday + "m";
+    
+    let btn1hr = document.getElementById('claim-1hr-btn');
+    let btn2hr = document.getElementById('claim-2hr-btn');
+    let badge = document.getElementById('reward-status-badge');
+
+    if (!btn1hr || !btn2hr) return;
+
+    if (totalActiveMinutesToday >= 60) {
+        btn1hr.style.background = "var(--primary)";
+        btn1hr.style.cursor = "pointer";
+        btn1hr.removeAttribute('disabled');
+        btn1hr.innerText = "Claim 100 Coins 🎉";
+    }
+
+    if (totalActiveMinutesToday >= 120) {
+        btn2hr.style.background = "var(--primary)";
+        btn2hr.style.cursor = "pointer";
+        btn2hr.removeAttribute('disabled');
+        btn2hr.innerText = "Claim 120 Coins 🎉";
+    }
+
+    if(badge) badge.innerText = `Active: ${Math.floor(totalActiveMinutesToday/60)}h ${totalActiveMinutesToday%60}m`;
+}
+
+async function claimUsageReward(requiredMinutes) {
+    let userId = localStorage.getItem('user_id');
+    if (!userId) return alert("Please login first!");
+
+    try {
+        const response = await fetch('/api/claim-reward', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, minutes_claimed: requiredMinutes })
+        });
+
+        const result = await response.json();
+        if (result.status === 'success') {
+            alert(`✅ Success! ${result.coins_added} coins added to your wallet.`);
+            updateBalanceUI(); // Balance refresh karega
+        } else {
+            alert("❌ " + result.message);
+        }
+    } catch (err) {
+        console.error("Claim error:", err);
+        alert("Failed to claim reward.");
+    }
+}
 </script>
 <script src="https://pl30419707.effectivecpmnetwork.com/14/be/19/14be1995fcca2039ec772bb1f54c3d15.js"></script>
 
