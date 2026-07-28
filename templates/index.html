@@ -130,20 +130,6 @@
         .day-card.locked::after { content: "🔒"; position: absolute; top: 2px; right: 5px; font-size: 9px; }
         .calendar-timer-text { font-size: 12px; color: var(--danger); font-weight: 600; margin-top: 12px; text-align: center; display: none; background: #fee2e2; padding: 6px; border-radius: 8px; }
 
-<!-- DAILY USAGE REWARD CARD -->
-        <div class="app-section" style="flex-direction: column; align-items: flex-start; background: rgba(255,255,255,0.05); border: 1px solid var(--primary);">
-            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 8px;">
-                <span class="section-title" style="margin-bottom:0;">⏳ Daily Active Time Reward</span>
-                <span id="reward-status-badge" style="font-size: 11px; padding: 3px 8px; background: #ff9800; color: #000; border-radius: 4px; font-weight: bold;">Loading...</span>
-            </div>
-            <p id="usage-timer-text" style="font-size: 13px; color: var(--text-muted); margin: 0 0 10px 0;">App use time tracked: <strong id="active-time-display">0m</strong></p>
-            
-            <div style="display: flex; gap: 10px; width: 100%;">
-                <button id="claim-1hr-btn" onclick="claimUsageReward(60)" style="flex:1; padding: 8px; background: #555; border: none; color: white; border-radius: 5px; cursor: not-allowed;" disabled>Claim 100 Coins (1h)</button>
-                <button id="claim-2hr-btn" onclick="claimUsageReward(120)" style="flex:1; padding: 8px; background: #555; border: none; color: white; border-radius: 5px; cursor: not-allowed;" disabled>Claim 120 Coins (2h)</button>
-            </div>
-            <div style="font-size: 10px; color: var(--text-muted); margin-top: 6px;">* Resets daily universally at 7:00 AM IST</div>
-        </div>
         /* 🎡 LUCKY SPIN WHEEL */
         .spin-section { background: #fffbeb; border: 1px solid #fef3c7; }
         .spin-stats { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #b45309; margin-bottom: 12px; }
@@ -224,6 +210,8 @@
 </head>
 <body>
 
+
+
 <div class="app-container">
     <h2>🎮 Earnwithme</h2>
     <div class="subtitle">Complete Tasks & Withdraw Instant Cash</div>
@@ -265,7 +253,19 @@
                 <button class="withdraw-trigger-btn" onclick="showScreen('withdraw-screen')">Withdraw 💰</button>
             </div>
         </div>
-
+    <div class="app-section" style="flex-direction: column; align-items: flex-start; background: rgba(255,255,255,0.05); border: 1px solid var(--primary);">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 8px;">
+                <span class="section-title" style="margin-bottom:0;">⏳ Daily Active Time Reward</span>
+                <span id="reward-status-badge" style="font-size: 11px; padding: 3px 8px; background: #ff9800; color: #000; border-radius: 4px; font-weight: bold;">Loading...</span>
+            </div>
+            <p id="usage-timer-text" style="font-size: 13px; color: var(--text-muted); margin: 0 0 10px 0;">App use time tracked: <strong id="active-time-display">0m</strong></p>
+            
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <button id="claim-1hr-btn" onclick="claimUsageReward(60)" style="flex:1; padding: 8px; background: #555; border: none; color: white; border-radius: 5px; cursor: not-allowed;" disabled>Claim 100 Coins (1h)</button>
+                <button id="claim-2hr-btn" onclick="claimUsageReward(120)" style="flex:1; padding: 8px; background: #555; border: none; color: white; border-radius: 5px; cursor: not-allowed;" disabled>Claim 120 Coins (2h)</button>
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 6px;">* Resets daily universally at 7:00 AM IST</div>
+        </div>
         <!-- INSTANT EXCHANGE PACKS -->
         <div class="app-section">
             <div class="section-title">⚡ Instant Payout Brackets</div>
