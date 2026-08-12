@@ -30,6 +30,14 @@ def serve_sw():
 def home():
     return render_template('index.html')
 
+@app.route('/play-game1')
+def play_game1():
+    return render_template('test.html')
+
+@app.route('/play-game2')
+def play_game2():
+    return render_template('test2.html')
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
