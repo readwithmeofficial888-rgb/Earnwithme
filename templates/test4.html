@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Red Ball Hero</title>
+  <title>Red Ball Hero - Full Landscape Game</title>
   <style>
     * {
       box-sizing: border-box;
@@ -26,44 +26,56 @@
       overflow: hidden;
     }
     
+    /* Responsive Canvas Container optimized for Landscape */
     #game-container {
       position: relative;
-      width: 100%;
-      height: 100%;
-      max-width: 800px; 
-      max-height: 450px;
+      width: 100vw;
+      height: 100vh;
+      max-width: 100vw;
+      max-height: 100vh;
       aspect-ratio: 16 / 9;
       background: #87CEEB;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     canvas {
       display: block;
       width: 100%;
       height: 100%;
+      object-fit: contain;
     }
 
+    /* Top HUD Bar */
     .hud {
       position: absolute;
       top: 10px;
-      left: 10px;
-      right: 10px;
+      left: 15px;
+      right: 15px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
       font-weight: bold;
+      text-shadow: 1px 1px 2px #000;
+      pointer-events: none;
       z-index: 5;
     }
     .hud div {
-      background: rgba(0, 0, 0, 0.5);
-      padding: 5px 12px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 6px 12px;
       border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
+    /* On-Screen Touch Controls */
     .mobile-controls {
       position: absolute;
-      bottom: 10px;
-      left: 10px;
-      right: 10px;
+      bottom: 12px;
+      left: 15px;
+      right: 15px;
       display: flex;
       justify-content: space-between;
       pointer-events: none;
@@ -71,23 +83,48 @@
     }
     .btn-group {
       display: flex;
-      gap: 12px;
+      gap: 15px;
       pointer-events: auto;
     }
     .touch-btn {
-      width: 50px;
-      height: 50px;
-      background: rgba(255, 255, 255, 0.4);
+      width: 55px;
+      height: 55px;
+      background: rgba(255, 255, 255, 0.35);
       border: 2px solid #fff;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 24px;
       color: white;
+      text-shadow: 1px 1px 2px #000;
+      cursor: pointer;
+      backdrop-filter: blur(2px);
+    }
+    .touch-btn:active {
+      background: rgba(255, 255, 255, 0.75);
+      transform: scale(0.92);
+    }
+
+    /* Fullscreen Button */
+    #fsBtn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      pointer-events: auto;
+      z-index: 15;
+      font-size: 16px;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      border: 1px solid #fff;
+      color: #fff;
       cursor: pointer;
     }
 
+    /* Start / GameOver Overlay Screen */
     .overlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -98,52 +135,52 @@
       justify-content: center;
       gap: 12px;
       z-index: 10;
+      padding: 15px;
+      text-align: center;
     }
-    .overlay h1 { font-size: 32px; color: #ff4757; }
+    .overlay h1 {
+      font-size: 32px;
+      color: #ff4757;
+      text-shadow: 2px 2px 0 #000;
+    }
+    .overlay p {
+      font-size: 14px;
+      color: #ddd;
+    }
     .overlay button {
-      padding: 10px 25px;
+      padding: 12px 28px;
       font-size: 18px;
+      font-weight: bold;
       color: #fff;
       background: #2ed573;
       border: none;
-      border-radius: 20px;
+      border-radius: 25px;
       cursor: pointer;
+      box-shadow: 0 4px 0 #26af5f;
     }
-    .hidden { display: none !important; }
-
-    #rotateNotice {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: #000;
-      z-index: 999;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
+    .overlay button:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #26af5f;
     }
-
-    @media only screen and (max-width: 768px) and (orientation: portrait) {
-      #rotateNotice { display: flex; }
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
 <body>
 
-  <div id="rotateNotice">
-    <h2>📱 Screen Rotate Karein</h2>
-    <p>Landscape (Horizontal) mode mein game khelein.</p>
-  </div>
-
   <div id="game-container">
     <canvas id="gameCanvas" width="800" height="450"></canvas>
 
+    <!-- HUD -->
     <div class="hud">
       <div id="levelDisplay">LEVEL 1</div>
       <div id="livesDisplay">❤️ ❤️ ❤️</div>
       <div id="starsDisplay">⭐ 0 / 0</div>
+      <button id="fsBtn">⛶</button>
     </div>
 
+    <!-- On-Screen Controls -->
     <div class="mobile-controls">
       <div class="btn-group">
         <div class="touch-btn" id="btnLeft">◀</div>
@@ -154,8 +191,12 @@
       </div>
     </div>
 
+    <!-- Game Overlay Screen -->
     <div id="screenOverlay" class="overlay">
       <h1 id="screenTitle">RED BALL HERO</h1>
+      <p id="screenSubtitle">
+        Horizontal Mode ON!<br>Use Arrow Keys / Screen Buttons to roll & jump.
+      </p>
       <button id="actionBtn">PLAY GAME</button>
     </div>
   </div>
@@ -170,8 +211,40 @@ const livesDisplay = document.getElementById('livesDisplay');
 const starsDisplay = document.getElementById('starsDisplay');
 const screenOverlay = document.getElementById('screenOverlay');
 const screenTitle = document.getElementById('screenTitle');
+const screenSubtitle = document.getElementById('screenSubtitle');
 const actionBtn = document.getElementById('actionBtn');
+const fsBtn = document.getElementById('fsBtn');
 
+// Fullscreen Toggle Logic
+fsBtn.onclick = () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+};
+
+// Automatic Resize for Rotation (Horizontal Viewport Fix)
+function handleResize() {
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+  
+  // Maintain 16:9 Aspect Ratio
+  if (windowWidth / windowHeight > 16 / 9) {
+    container.style.width = (windowHeight * (16 / 9)) + 'px';
+    container.style.height = windowHeight + 'px';
+  } else {
+    container.style.width = windowWidth + 'px';
+    container.style.height = (windowWidth * (9 / 16)) + 'px';
+  }
+}
+window.addEventListener('resize', handleResize);
+window.addEventListener('orientationchange', () => {
+  setTimeout(handleResize, 200);
+});
+handleResize();
+
+// Keyboard Controls
 const keys = { left: false, right: false, up: false };
 
 window.addEventListener('keydown', (e) => {
@@ -186,6 +259,7 @@ window.addEventListener('keyup', (e) => {
   if (['ArrowUp', 'w', 'W', ' '].includes(e.key)) keys.up = false;
 });
 
+// Mobile Touch Controls
 const bindTouch = (id, keyName) => {
   const btn = document.getElementById(id);
   const setKey = (val) => (e) => { 
@@ -201,10 +275,12 @@ bindTouch('btnLeft', 'left');
 bindTouch('btnRight', 'right');
 bindTouch('btnJump', 'up');
 
+// Game State Variables
 let gameState = 'START';
 let currentLevel = 1;
 let cameraX = 0;
 let totalStars = 0;
+let particles = [];
 
 const GRAVITY = 0.45;
 const FRICTION = 0.88;
@@ -212,157 +288,68 @@ const ACCEL = 0.75;
 const JUMP_FORCE = -11;
 
 const player = {
-  x: 80, y: 300, vx: 0, vy: 0, radius: 18, angle: 0, grounded: false, lives: 3, stars: 0,
+  x: 80, y: 300, vx: 0, vy: 0, radius: 18, angle: 0, grounded: false, lives: 3, stars: 0, invulnerable: 0,
   reset(x = 80, y = 300) {
     this.x = x; this.y = y; this.vx = 0; this.vy = 0; this.angle = 0; this.grounded = false;
   }
 };
 
-let platforms = [], stars = [], enemies = [], flag = { x: 0, y: 0, w: 45, h: 120 };
+let platforms = [];
+let stars = [];
+let enemies = [];
+let spikes = [];
+let flag = { x: 0, y: 0, w: 45, h: 120 };
+
+const skyThemes = [
+  '#87CEEB', '#ff7f50', '#2c3e50', '#6c5ce7', '#00b894',
+  '#d63031', '#e17055', '#00cec9', '#fdcb6e', '#2d3436'
+];
 
 function generateLevel(levelNum) {
-  platforms = []; stars = []; enemies = [];
-  let currentX = 0, currentY = 380;
+  platforms = []; stars = []; enemies = []; spikes = [];
+
+  const themeColor = skyThemes[(levelNum - 1) % skyThemes.length];
+  container.style.background = themeColor;
+
+  let currentX = 0;
+  let currentY = 380;
   platforms.push({ x: 0, y: currentY, w: 500, h: 120 });
   currentX += 500;
 
-  for (let i = 0; i < 6; i++) {
-    currentX += 90;
-    currentY = Math.max(220, Math.min(390, currentY + (Math.random() - 0.5) * 100));
-    let platWidth = 250;
+  let numSegments = 5 + Math.floor(levelNum * 1.2);
+  let enemySpeedBase = 1.6 + Math.min(levelNum * 0.25, 4.0);
+
+  for (let i = 0; i < numSegments; i++) {
+    let maxGap = Math.min(100 + levelNum * 4, 160);
+    let gap = 85 + Math.random() * (maxGap - 85);
+    currentX += gap;
+
+    let heightDelta = (Math.random() - 0.5) * 120;
+    currentY = Math.max(220, Math.min(390, currentY + heightDelta));
+    let platWidth = Math.max(150, 420 - levelNum * 12 + Math.random() * 80);
+
     platforms.push({ x: currentX, y: currentY, w: platWidth, h: 450 - currentY });
-    stars.push({ x: currentX + 50, y: currentY - 40, collected: false });
-    currentX += platWidth;
-  }
 
-  currentX += 80;
-  platforms.push({ x: currentX, y: 340, w: 400, h: 150 });
-  flag = { x: currentX + 200, y: 220, w: 50, h: 120 };
-
-  player.reset(80, 300);
-  player.lives = 3;
-  player.stars = 0;
-  totalStars = stars.length;
-  levelDisplay.innerText = `LEVEL ${currentLevel}`;
-  updateHUD();
-}
-
-function updateHUD() {
-  let hearts = '';
-  for (let i = 0; i < player.lives; i++) hearts += '❤️ ';
-  livesDisplay.innerText = hearts || '💀';
-  starsDisplay.innerText = `⭐ ${player.stars} / ${totalStars}`;
-}
-
-function update() {
-  if (gameState !== 'PLAYING') return;
-
-  if (keys.left) player.vx -= ACCEL;
-  if (keys.right) player.vx += ACCEL;
-  if (keys.up && player.grounded) {
-    player.vy = JUMP_FORCE;
-    player.grounded = false;
-  }
-
-  player.vx *= FRICTION;
-  player.vy += GRAVITY;
-  player.x += player.vx;
-  player.y += player.vy;
-  player.angle += player.vx / player.radius;
-
-  player.grounded = false;
-  for (let p of platforms) {
-    if (player.x + player.radius > p.x && player.x - player.radius < p.x + p.w) {
-      if (player.y + player.radius >= p.y && player.y + player.radius <= p.y + p.h + player.vy && player.vy >= 0) {
-        player.y = p.y - player.radius;
-        player.vy = 0;
-        player.grounded = true;
-      }
+    let numStars = Math.floor(Math.random() * 3) + 1;
+    for (let s = 0; s < numStars; s++) {
+      stars.push({
+        x: currentX + 35 + s * 45,
+        y: currentY - 40,
+        collected: false
+      });
     }
-  }
 
-  if (player.y > 500) {
-    player.reset(80, 300);
-    player.lives--;
-    updateHUD();
-    if(player.lives <= 0) {
-      gameState = 'GAMEOVER';
-      screenTitle.innerText = "GAME OVER";
-      screenOverlay.classList.remove('hidden');
+    if (levelNum >= 3 && Math.random() < 0.45 && platWidth >= 220) {
+      let spikeX = currentX + platWidth / 2 - 20;
+      spikes.push({ x: spikeX, y: currentY - 18, w: 40, h: 18 });
     }
-  }
 
-  for (let s of stars) {
-    if (s.collected) continue;
-    let dx = player.x - s.x;
-    let dy = player.y - s.y;
-    if (Math.sqrt(dx * dx + dy * dy) < player.radius + 15) {
-      s.collected = true;
-      player.stars++;
-      updateHUD();
-    }
-  }
-
-  let cameraTarget = player.x - canvas.width / 3;
-  cameraX += (cameraTarget - cameraX) * 0.1;
-  cameraX = Math.max(0, cameraX);
-}
-
-function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.save();
-  ctx.translate(-Math.floor(cameraX), 0);
-
-  for (let p of platforms) {
-    ctx.fillStyle = '#8B5A2B';
-    ctx.fillRect(p.x, p.y, p.w, p.h);
-    ctx.fillStyle = '#7BED9F';
-    ctx.fillRect(p.x, p.y, p.w, 15);
-  }
-
-  for (let s of stars) {
-    if (s.collected) continue;
-    ctx.fillStyle = '#FFD700';
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  ctx.fillStyle = '#8B5A2B';
-  ctx.fillRect(flag.x, flag.y, 8, flag.h);
-  ctx.fillStyle = '#ff4757';
-  ctx.fillRect(flag.x + 8, flag.y + 10, 35, 25);
-
-  ctx.save();
-  ctx.translate(player.x, player.y);
-  ctx.rotate(player.angle);
-  ctx.fillStyle = '#ff4757';
-  ctx.beginPath();
-  ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  ctx.restore();
-}
-
-function gameLoop() {
-  update();
-  render();
-  requestAnimationFrame(gameLoop);
-}
-
-actionBtn.onclick = () => {
-  currentLevel = 1;
-  generateLevel(1);
-  gameState = 'PLAYING';
-  screenOverlay.classList.add('hidden');
-};
-
-requestAnimationFrame(gameLoop);
-</script>
-</body>
-</html>
-ntX + 10,
+    if (Math.random() < 0.5 + levelNum * 0.04 && platWidth >= 200) {
+      enemies.push({
+        x: currentX + platWidth / 2 + 30,
+        y: currentY - 35,
+        w: 35, h: 35,
+        minX: currentX + 10,
         maxX: currentX + platWidth - 45,
         dir: Math.random() > 0.5 ? 1 : -1,
         speed: enemySpeedBase + Math.random() * 0.8,
@@ -386,6 +373,346 @@ ntX + 10,
   player.reset(80, 300);
   player.lives = 3;
   player.stars = 0;
+  totalStars = stars.length;
+
+  levelDisplay.innerText = `LEVEL ${currentLevel}`;
+  updateHUD();
+}
+
+function updateHUD() {
+  let hearts = '';
+  for (let i = 0; i < player.lives; i++) hearts += '❤️ ';
+  livesDisplay.innerText = hearts || '💀';
+  starsDisplay.innerText = `⭐ ${player.stars} / ${totalStars}`;
+}
+
+function spawnParticles(x, y, color, count = 10) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 6,
+      vy: (Math.random() - 0.5) * 6,
+      size: Math.random() * 6 + 3,
+      color: color,
+      life: 25
+    });
+  }
+}
+
+function checkCircleRectOverlap(cx, cy, cr, rx, ry, rw, rh) {
+  let closestX = Math.max(rx, Math.min(cx, rx + rw));
+  let closestY = Math.max(ry, Math.min(cy, ry + rh));
+  let distX = cx - closestX;
+  let distY = cy - closestY;
+  return (distX * distX + distY * distY) < (cr * cr);
+}
+
+function update() {
+  if (gameState !== 'PLAYING') return;
+
+  if (keys.left) player.vx -= ACCEL;
+  if (keys.right) player.vx += ACCEL;
+
+  if (keys.up && player.grounded) {
+    player.vy = JUMP_FORCE;
+    player.grounded = false;
+    spawnParticles(player.x, player.y + player.radius, '#ffffff', 5);
+  }
+
+  player.vx *= FRICTION;
+  player.vy += GRAVITY;
+
+  player.x += player.vx;
+  player.y += player.vy;
+  player.angle += player.vx / player.radius;
+
+  player.grounded = false;
+  for (let p of platforms) {
+    if (player.x + player.radius > p.x && player.x - player.radius < p.x + p.w) {
+      if (player.y + player.radius >= p.y && player.y + player.radius <= p.y + p.h + player.vy && player.vy >= 0) {
+        player.y = p.y - player.radius;
+        player.vy = 0;
+        player.grounded = true;
+      }
+    }
+  }
+
+  if (player.y > 600) takeDamage(true);
+  if (player.invulnerable > 0) player.invulnerable--;
+
+  for (let e of enemies) {
+    if (!e.alive) continue;
+    e.x += e.speed * e.dir;
+    if (e.x < e.minX || e.x + e.w > e.maxX) e.dir *= -1;
+
+    if (
+      player.x + player.radius > e.x &&
+      player.x - player.radius < e.x + e.w &&
+      player.y + player.radius > e.y &&
+      player.y - player.radius < e.y + e.h
+    ) {
+      if (player.vy > 0 && player.y < e.y + e.h / 2) {
+        e.alive = false;
+        player.vy = JUMP_FORCE * 0.7;
+        spawnParticles(e.x + e.w/2, e.y + e.h/2, '#222222', 15);
+      } else {
+        takeDamage();
+      }
+    }
+  }
+
+  for (let sp of spikes) {
+    if (checkCircleRectOverlap(player.x, player.y, player.radius, sp.x, sp.y, sp.w, sp.h)) {
+      takeDamage();
+    }
+  }
+
+  for (let s of stars) {
+    if (s.collected) continue;
+    let dx = player.x - s.x;
+    let dy = player.y - s.y;
+    if (Math.sqrt(dx * dx + dy * dy) < player.radius + 15) {
+      s.collected = true;
+      player.stars++;
+      updateHUD();
+      spawnParticles(s.x, s.y, '#ffd700', 12);
+    }
+  }
+
+  if (checkCircleRectOverlap(player.x, player.y, player.radius, flag.x, flag.y, flag.w, flag.h)) {
+    winLevel();
+    return;
+  }
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  let targetCamX = player.x - canvas.width / 3;
+  cameraX += (targetCamX - cameraX) * 0.1;
+  cameraX = Math.max(0, cameraX);
+}
+
+function takeDamage(instantKill = false) {
+  if (player.invulnerable > 0 && !instantKill) return;
+
+  player.lives--;
+  updateHUD();
+  spawnParticles(player.x, player.y, '#ff4757', 15);
+
+  if (player.lives <= 0 || instantKill) {
+    if (player.lives <= 0) {
+      gameOver();
+    } else {
+      player.reset(80, 300);
+      player.invulnerable = 60;
+    }
+  } else {
+    player.vy = -6;
+    player.vx = -player.vx * 1.5;
+    player.invulnerable = 60;
+  }
+}
+
+function gameOver() {
+  gameState = 'GAMEOVER';
+  screenTitle.innerText = 'GAME OVER';
+  screenTitle.style.color = '#ff4757';
+  screenSubtitle.innerText = `Failed at Level ${currentLevel}!`;
+  actionBtn.innerText = 'RETRY LEVEL';
+  actionBtn.onclick = () => { startLevel(currentLevel); };
+  screenOverlay.classList.remove('hidden');
+}
+
+function winLevel() {
+  gameState = 'WIN';
+  spawnParticles(flag.x + 20, flag.y + 20, '#2ed573', 25);
+  
+  screenTitle.innerText = `LEVEL ${currentLevel} CLEARED!`;
+  screenTitle.style.color = '#2ed573';
+  screenSubtitle.innerText = `Collected ${player.stars} / ${totalStars} stars!`;
+
+  actionBtn.innerText = `START LEVEL ${currentLevel + 1} ▶`;
+  actionBtn.onclick = () => {
+    currentLevel++;
+    startLevel(currentLevel);
+  };
+  screenOverlay.classList.remove('hidden');
+}
+
+function startLevel(lvl) {
+  currentLevel = lvl;
+  generateLevel(currentLevel);
+  gameState = 'PLAYING';
+  screenOverlay.classList.add('hidden');
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.translate(-Math.floor(cameraX), 0);
+
+  // Clouds
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+  [100, 500, 900, 1400, 1900, 2400, 2900, 3400, 3900, 4400].forEach((cx, i) => {
+    let cy = 80 + (i % 3) * 20;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 25, 0, Math.PI * 2);
+    ctx.arc(cx + 20, cy - 10, 30, 0, Math.PI * 2);
+    ctx.arc(cx + 45, cy, 22, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Platforms
+  for (let p of platforms) {
+    ctx.fillStyle = '#8B5A2B';
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = '#7BED9F';
+    ctx.fillRect(p.x, p.y, p.w, 15);
+    ctx.strokeStyle = '#2ed573';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+  }
+
+  // Spikes
+  for (let sp of spikes) {
+    ctx.fillStyle = '#ff4757';
+    ctx.beginPath();
+    ctx.moveTo(sp.x, sp.y + sp.h);
+    ctx.lineTo(sp.x + sp.w / 2, sp.y);
+    ctx.lineTo(sp.x + sp.w, sp.y + sp.h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#2f3542';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Stars
+  let time = Date.now() * 0.005;
+  for (let s of stars) {
+    if (s.collected) continue;
+    let floatY = s.y + Math.sin(time + s.x) * 5;
+    drawStar(s.x, floatY, 5, 12, 6, '#FFD700', '#FFA500');
+  }
+
+  // Enemies
+  for (let e of enemies) {
+    if (!e.alive) continue;
+    ctx.fillStyle = '#2f3542';
+    ctx.fillRect(e.x, e.y, e.w, e.h);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(e.x, e.y, e.w, e.h);
+
+    ctx.fillStyle = '#ff4757';
+    ctx.fillRect(e.x + (e.dir === 1 ? 18 : 6), e.y + 8, 8, 8);
+    ctx.fillRect(e.x + (e.dir === 1 ? 26 : 14), e.y + 8, 8, 8);
+  }
+
+  // Flag
+  ctx.fillStyle = '#8B5A2B';
+  ctx.fillRect(flag.x, flag.y, 8, flag.h);
+  ctx.fillStyle = '#ff4757';
+  ctx.beginPath();
+  ctx.moveTo(flag.x + 8, flag.y + 10);
+  ctx.lineTo(flag.x + flag.w, flag.y + 30);
+  ctx.lineTo(flag.x + 8, flag.y + 50);
+  ctx.fill();
+
+  // Particles
+  for (let p of particles) {
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Player
+  if (player.invulnerable % 4 < 2) {
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate(player.angle);
+
+    let grad = ctx.createRadialGradient(-4, -4, 2, 0, 0, player.radius);
+    grad.addColorStop(0, '#ff6b81');
+    grad.addColorStop(1, '#ff4757');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#d63031';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(6, -4, 5, 0, Math.PI * 2);
+    ctx.arc(13, -4, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.arc(7, -4, 2.5, 0, Math.PI * 2);
+    ctx.arc(14, -4, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(8, 2, 5, 0.1, Math.PI - 0.1);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function drawStar(cx, cy, spikes, outerRadius, innerRadius, fillCol, strokeCol) {
+  let rot = Math.PI / 2 * 3;
+  let step = Math.PI / spikes;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - outerRadius);
+  for (let i = 0; i < spikes; i++) {
+    let x = cx + Math.cos(rot) * outerRadius;
+    let y = cy + Math.sin(rot) * outerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+
+    x = cx + Math.cos(rot) * innerRadius;
+    y = cy + Math.sin(rot) * innerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+  }
+  ctx.lineTo(cx, cy - outerRadius);
+  ctx.closePath();
+  ctx.fillStyle = fillCol;
+  ctx.fill();
+  ctx.strokeStyle = strokeCol;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function gameLoop() {
+  update();
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+actionBtn.onclick = () => { startLevel(1); };
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
+0;
   totalStars = stars.length;
 
   levelDisplay.innerText = `LEVEL ${currentLevel}`;
