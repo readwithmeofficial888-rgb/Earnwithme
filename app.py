@@ -38,6 +38,14 @@ def play_game1():
 def play_game2():
     return render_template('test2.html')
 
+@app.route('/play-game3')
+def play_game1():
+    return render_template('test3.html')
+
+@app.route('/play-game4')
+def play_game2():
+    return render_template('test4.html')
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
