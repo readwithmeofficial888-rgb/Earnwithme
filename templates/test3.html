@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Zombie Outbreak: Cannon Siege</title>
     <style>
         * {
@@ -10,6 +10,8 @@
             margin: 0;
             padding: 0;
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
         }
         body {
             background-color: #1e272e;
@@ -26,89 +28,106 @@
             flex-direction: column;
             align-items: center;
             background-color: #2f3640;
-            padding: 15px;
+            padding: 10px;
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 4px solid #487eb0;
+            border: 3px solid #487eb0;
+            width: 100%;
+            max-width: 920px;
         }
         #top-bar {
             display: flex;
             justify-content: space-between;
-            width: 900px;
-            margin-bottom: 10px;
+            width: 100%;
+            margin-bottom: 8px;
             background-color: #1e272e;
-            padding: 10px 20px;
+            padding: 8px 12px;
             border-radius: 8px;
             border: 2px solid #487eb0;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 15px;
         }
         .stat {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
+        }
+        #canvas-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 900 / 480;
+            max-height: 65vh;
         }
         canvas {
             background-color: #27ae60;
             border-radius: 8px;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
             cursor: pointer;
+            width: 100%;
+            height: 100%;
+            display: block;
         }
         #controls {
             display: grid;
-            grid-template-columns: repeat(4, 1fr) 200px;
-            gap: 10px;
-            margin-top: 10px;
-            width: 900px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+            width: 100%;
         }
         .tower-card {
             background-color: #353b48;
-            border: 3px solid #718093;
-            border-radius: 8px;
-            padding: 6px;
+            border: 2px solid #718093;
+            border-radius: 6px;
+            padding: 4px;
             display: flex;
             flex-direction: column;
             align-items: center;
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .tower-card:hover {
-            transform: translateY(-2px);
-            border-color: #fbc531;
-        }
         .tower-card.selected {
             border-color: #4cd137;
             background-color: #2f3640;
-            box-shadow: 0 0 10px rgba(76, 209, 55, 0.5);
+            box-shadow: 0 0 8px rgba(76, 209, 55, 0.5);
         }
         .tower-card.disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
             border-color: #718093 !important;
-            transform: none !important;
         }
         .tower-title {
             font-weight: bold;
-            margin-bottom: 2px;
-            font-size: 12px;
+            margin-bottom: 1px;
+            font-size: 11px;
             text-align: center;
         }
         .tower-cost {
             color: #fbc531;
-            font-size: 11px;
+            font-size: 10px;
         }
         #wave-status {
-            grid-column: span 1;
+            grid-column: span 4;
             background-color: #1e272e;
             color: #fbc531;
-            padding: 10px;
+            padding: 8px;
             font-weight: bold;
-            font-size: 15px;
-            border-radius: 8px;
+            font-size: 13px;
+            border-radius: 6px;
             border: 2px solid #487eb0;
             display: flex;
             align-items: center;
             justify-content: center;
+            text-align: center;
+        }
+
+        /* Media query for wider desktop screens to keep proportions neat */
+        @media (min-width: 920px) {
+            #controls {
+                grid-template-columns: repeat(4, 1fr) 200px;
+            }
+            #wave-status {
+                grid-column: span 1;
+            }
         }
     </style>
 </head>
@@ -116,45 +135,47 @@
 
 <div id="game-container">
     <div id="top-bar">
-        <div class="stat">⚠️ Status: <span id="status-val" style="color: #2ecc71;">DEFENDING</span></div>
-        <div class="stat">🪙 Gold: <span id="gold-val" style="color: #fbc531;">200</span></div>
-        <div class="stat">🧟 Wave: <span id="wave-val" style="color: #4cd137;">1</span></div>
+        <div class="stat">⚠️ <span id="status-val" style="color: #2ecc71;">DEFENDING</span></div>
+        <div class="stat">🪙 <span id="gold-val" style="color: #fbc531;">200</span></div>
+        <div class="stat">🧟 <span id="wave-val" style="color: #4cd137;">1</span></div>
     </div>
     
-    <canvas id="gameCanvas" width="900" height="480"></canvas>
+    <div id="canvas-wrapper">
+        <canvas id="gameCanvas" width="900" height="480"></canvas>
+    </div>
     
     <div id="controls">
         <div class="tower-card selected" id="card-archer" onclick="selectTower('archer')">
             <span class="tower-title">🎯 Slinger</span>
-            <span class="tower-cost">100 Gold</span>
+            <span class="tower-cost">100 G</span>
         </div>
         <div class="tower-card" id="card-cannon" onclick="selectTower('cannon')">
-            <span class="tower-title">💣 Heavy Cannon</span>
-            <span class="tower-cost">175 Gold</span>
+            <span class="tower-title">💣 Heavy</span>
+            <span class="tower-cost">175 G</span>
         </div>
         <div class="tower-card" id="card-ice" onclick="selectTower('ice')">
-            <span class="tower-title">❄️ Frost Guard</span>
-            <span class="tower-cost">125 Gold</span>
+            <span class="tower-title">❄️ Frost</span>
+            <span class="tower-cost">125 G</span>
         </div>
         <div class="tower-card" id="card-gatling" onclick="selectTower('gatling')">
-            <span class="tower-title">⚡ Gatling Cannon</span>
-            <span class="tower-cost">225 Gold</span>
+            <span class="tower-title">⚡ Gatling</span>
+            <span class="tower-cost">225 G</span>
         </div>
         <div class="tower-card" id="card-sniper" onclick="selectTower('sniper')">
-            <span class="tower-title">🔭 Sniper Cannon</span>
-            <span class="tower-cost">250 Gold</span>
+            <span class="tower-title">🔭 Sniper</span>
+            <span class="tower-cost">250 G</span>
         </div>
         <div class="tower-card" id="card-plasma" onclick="selectTower('plasma')">
-            <span class="tower-title">🔮 Plasma Cannon</span>
-            <span class="tower-cost">300 Gold</span>
+            <span class="tower-title">🔮 Plasma</span>
+            <span class="tower-cost">300 G</span>
         </div>
         <div class="tower-card" id="card-toxic" onclick="selectTower('toxic')">
-            <span class="tower-title">☣️ Toxic Mortar</span>
-            <span class="tower-cost">200 Gold</span>
+            <span class="tower-title">☣️ Toxic</span>
+            <span class="tower-cost">200 G</span>
         </div>
         <div class="tower-card" id="card-nuke" onclick="selectTower('nuke')">
-            <span class="tower-title">☢️ Nuke Howitzer</span>
-            <span class="tower-cost">450 Gold</span>
+            <span class="tower-title">☢️ Nuke</span>
+            <span class="tower-cost">450 G</span>
         </div>
         <div id="wave-status">Next Wave: <span id="timer-val" style="margin-left: 5px;">4</span>s</div>
     </div>
@@ -294,7 +315,7 @@ let waveInProgress = false;
 let autoStartTimer = 4;
 let autoStartInterval = null;
 let selectedTowerType = 'archer';
-let mousePos = { x: 0, y: 0 };
+let mousePos = { x: -100, y: -100 };
 
 const GRID_SIZE = 40;
 const PATH = [
@@ -334,13 +355,40 @@ let particles = [];
 let waveZombiesToSpawn = [];
 let spawnTimer = 0;
 
-canvas.addEventListener('mousemove', (e) => {
+function getCanvasCoordinates(e) {
     const rect = canvas.getBoundingClientRect();
-    mousePos.x = e.clientX - rect.left;
-    mousePos.y = e.clientY - rect.top;
+    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+    
+    // Scale client coords to internal canvas resolution (900x480)
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+    };
+}
+
+canvas.addEventListener('mousemove', (e) => {
+    mousePos = getCanvasCoordinates(e);
 });
 
-canvas.addEventListener('click', () => {
+canvas.addEventListener('mouseleave', () => {
+    mousePos = { x: -100, y: -100 };
+});
+
+canvas.addEventListener('click', (e) => {
+    handleCanvasInteract(e);
+});
+
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    mousePos = getCanvasCoordinates(e);
+    handleCanvasInteract(e);
+}, { passive: false });
+
+function handleCanvasInteract(e) {
     initAudio();
     if (isGameOver) return;
 
@@ -357,7 +405,7 @@ canvas.addEventListener('click', () => {
             updateUI();
         }
     }
-});
+}
 
 function selectTower(type) {
     selectedTowerType = type;
@@ -798,13 +846,11 @@ function startWave() {
 
     waveZombiesToSpawn = [];
 
-    // Wave 1 mein STRICTLY 5 basic zombies aayenge
     if (wave === 1) {
         for (let i = 0; i < 5; i++) {
             waveZombiesToSpawn.push('basic');
         }
     } else {
-        // Wave 2+ mein count badhega
         const count = 4 + wave * 2;
         for (let i = 0; i < count; i++) {
             let type = 'basic';
@@ -823,7 +869,6 @@ function startWave() {
 function updateGame() {
     if (isGameOver) return;
 
-    // Fixed Spawn Mechanism - Ek baar array khali hote hi spawn band ho jayega
     if (waveInProgress && waveZombiesToSpawn.length > 0) {
         spawnTimer++;
         if (spawnTimer >= 35) {
@@ -856,7 +901,6 @@ function updateGame() {
         }
     }
 
-    // Checking strictly ki Spawning list AND screen ke sabhi Zombies khatam hue ya nahi
     if (waveInProgress && waveZombiesToSpawn.length === 0 && zombies.length === 0) {
         waveInProgress = false;
         wave++;
@@ -900,7 +944,7 @@ function drawGame() {
     const gridY = Math.floor(mousePos.y / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2;
     const validPlacement = canPlaceTower(gridX, gridY);
 
-    if (!isGameOver && mousePos.x > 0 && mousePos.x < canvas.width && mousePos.y > 0 && mousePos.y < canvas.height) {
+    if (!isGameOver && mousePos.x >= 0 && mousePos.x <= canvas.width && mousePos.y >= 0 && mousePos.y <= canvas.height) {
         const typeData = TOWER_TYPES[selectedTowerType];
         
         ctx.beginPath();
