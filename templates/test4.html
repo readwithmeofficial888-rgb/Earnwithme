@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Red Ball Adventure - Mobile & PC</title>
+  <title>Red Ball Hero</title>
   <style>
     * {
       box-sizing: border-box;
@@ -15,39 +15,34 @@
     }
     
     html, body {
-      width: 100%;
-      height: 100%;
-      background-color: #12121a !important; /* Fixed blackish bg to avoid text showing behind */
-      font-family: 'Fredoka', 'Comic Sans MS', cursive, sans-serif;
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      font-family: Arial, sans-serif;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       color: #fff;
       overflow: hidden;
     }
     
-    /* Responsive Game Container */
     #game-container {
       position: relative;
       width: 100%;
+      height: 100%;
       max-width: 800px; 
+      max-height: 450px;
       aspect-ratio: 16 / 9;
-      box-shadow: 0 15px 30px rgba(0,0,0,0.7);
-      border-radius: 12px;
-      overflow: hidden;
-      border: 3px solid #fff;
       background: #87CEEB;
+      overflow: hidden;
     }
     
     canvas {
       display: block;
       width: 100%;
       height: 100%;
-      background-color: #87CEEB;
     }
 
-    /* HUD Header */
     .hud {
       position: absolute;
       top: 10px;
@@ -55,22 +50,15 @@
       right: 10px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      font-size: 14px;
       font-weight: bold;
-      text-shadow: 2px 2px 0px #000;
-      pointer-events: none;
       z-index: 5;
     }
     .hud div {
       background: rgba(0, 0, 0, 0.5);
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 20px;
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
-    /* Mobile Controls */
     .mobile-controls {
       position: absolute;
       bottom: 10px;
@@ -87,26 +75,19 @@
       pointer-events: auto;
     }
     .touch-btn {
-      width: 48px;
-      height: 48px;
-      background: rgba(255, 255, 255, 0.35);
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.4);
       border: 2px solid #fff;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 22px;
       color: white;
-      text-shadow: 1px 1px 2px #000;
-      backdrop-filter: blur(4px);
       cursor: pointer;
     }
-    .touch-btn:active {
-      background: rgba(255, 255, 255, 0.7);
-      transform: scale(0.92);
-    }
 
-    /* Overlays */
     .overlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -116,103 +97,53 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      backdrop-filter: blur(5px);
       z-index: 10;
-      padding: 15px;
-      text-align: center;
     }
-    .overlay h1 {
-      font-size: 28px;
-      color: #ff4757;
-      text-shadow: 2px 2px 0 #000;
-    }
-    .overlay p {
-      font-size: 14px;
-      color: #ddd;
-    }
+    .overlay h1 { font-size: 32px; color: #ff4757; }
     .overlay button {
-      padding: 10px 24px;
+      padding: 10px 25px;
       font-size: 18px;
-      font-weight: bold;
       color: #fff;
       background: #2ed573;
       border: none;
-      border-radius: 30px;
-      box-shadow: 0 4px 0 #26af5f;
+      border-radius: 20px;
       cursor: pointer;
-      font-family: inherit;
     }
-    .overlay button:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px 0 #26af5f;
-    }
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
 
-    /* Mobile Landscape Overlay Notice */
     #rotateNotice {
       display: none;
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
-      background: #0d0f18;
+      background: #000;
       z-index: 999;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 20px;
-    }
-    #rotateNotice .phone-icon {
-      font-size: 50px;
-      animation: rotateAnim 2s infinite ease-in-out;
-      margin-bottom: 15px;
-    }
-    @keyframes rotateAnim {
-      0% { transform: rotate(0deg); }
-      50% { transform: rotate(-90deg); }
-      100% { transform: rotate(-90deg); }
     }
 
-    /* Target Mobile portrait orientation ONLY */
     @media only screen and (max-width: 768px) and (orientation: portrait) {
-      #rotateNotice {
-        display: flex;
-      }
-    }
-
-    /* PC Desktop Adjustments */
-    @media (min-width: 769px) {
-      .hud { font-size: 18px; }
-      .hud div { padding: 6px 14px; }
-      .touch-btn { width: 56px; height: 56px; font-size: 24px; }
-      .overlay h1 { font-size: 40px; }
-      .overlay p { font-size: 16px; }
-      .overlay button { padding: 12px 30px; font-size: 20px; }
+      #rotateNotice { display: flex; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Mobile Landscape Warning -->
   <div id="rotateNotice">
-    <div class="phone-icon">📱</div>
-    <h2>Please Rotate Your Phone</h2>
-    <p style="margin-top: 8px; color: #aaa;">Acche experience ke liye phone ko Landscape (Horizontal) mode mai ghumaayein.</p>
+    <h2>📱 Screen Rotate Karein</h2>
+    <p>Landscape (Horizontal) mode mein game khelein.</p>
   </div>
 
-  <!-- Main Game Box -->
   <div id="game-container">
     <canvas id="gameCanvas" width="800" height="450"></canvas>
 
-    <!-- HUD -->
     <div class="hud">
       <div id="levelDisplay">LEVEL 1</div>
       <div id="livesDisplay">❤️ ❤️ ❤️</div>
       <div id="starsDisplay">⭐ 0 / 0</div>
     </div>
 
-    <!-- Mobile Controls -->
     <div class="mobile-controls">
       <div class="btn-group">
         <div class="touch-btn" id="btnLeft">◀</div>
@@ -223,12 +154,8 @@
       </div>
     </div>
 
-    <!-- Overlay Screen -->
     <div id="screenOverlay" class="overlay">
       <h1 id="screenTitle">RED BALL HERO</h1>
-      <p id="screenSubtitle">
-        Use Arrow Keys / WASD / On-screen buttons.<br>Touch the flag to win!
-      </p>
       <button id="actionBtn">PLAY GAME</button>
     </div>
   </div>
@@ -243,10 +170,8 @@ const livesDisplay = document.getElementById('livesDisplay');
 const starsDisplay = document.getElementById('starsDisplay');
 const screenOverlay = document.getElementById('screenOverlay');
 const screenTitle = document.getElementById('screenTitle');
-const screenSubtitle = document.getElementById('screenSubtitle');
 const actionBtn = document.getElementById('actionBtn');
 
-// Keyboard Controls
 const keys = { left: false, right: false, up: false };
 
 window.addEventListener('keydown', (e) => {
@@ -261,7 +186,6 @@ window.addEventListener('keyup', (e) => {
   if (['ArrowUp', 'w', 'W', ' '].includes(e.key)) keys.up = false;
 });
 
-// Mobile Touch Control Bindings
 const bindTouch = (id, keyName) => {
   const btn = document.getElementById(id);
   const setKey = (val) => (e) => { 
@@ -277,12 +201,10 @@ bindTouch('btnLeft', 'left');
 bindTouch('btnRight', 'right');
 bindTouch('btnJump', 'up');
 
-// Game Engine State Variables
 let gameState = 'START';
 let currentLevel = 1;
 let cameraX = 0;
 let totalStars = 0;
-let particles = [];
 
 const GRAVITY = 0.45;
 const FRICTION = 0.88;
@@ -290,87 +212,157 @@ const ACCEL = 0.75;
 const JUMP_FORCE = -11;
 
 const player = {
-  x: 80,
-  y: 300,
-  vx: 0,
-  vy: 0,
-  radius: 18,
-  angle: 0,
-  grounded: false,
-  lives: 3,
-  stars: 0,
-  invulnerable: 0,
+  x: 80, y: 300, vx: 0, vy: 0, radius: 18, angle: 0, grounded: false, lives: 3, stars: 0,
   reset(x = 80, y = 300) {
-    this.x = x;
-    this.y = y;
-    this.vx = 0;
-    this.vy = 0;
-    this.angle = 0;
-    this.grounded = false;
+    this.x = x; this.y = y; this.vx = 0; this.vy = 0; this.angle = 0; this.grounded = false;
   }
 };
 
-let platforms = [];
-let stars = [];
-let enemies = [];
-let spikes = [];
-let flag = { x: 0, y: 0, w: 45, h: 120 };
-
-const skyThemes = [
-  '#87CEEB', '#ff7f50', '#2c3e50', '#6c5ce7', '#00b894',
-  '#d63031', '#e17055', '#00cec9', '#fdcb6e', '#2d3436'
-];
+let platforms = [], stars = [], enemies = [], flag = { x: 0, y: 0, w: 45, h: 120 };
 
 function generateLevel(levelNum) {
-  platforms = [];
-  stars = [];
-  enemies = [];
-  spikes = [];
-
-  const themeColor = skyThemes[(levelNum - 1) % skyThemes.length];
-  container.style.background = themeColor;
-  canvas.style.backgroundColor = themeColor;
-
-  let currentX = 0;
-  let currentY = 380;
+  platforms = []; stars = []; enemies = [];
+  let currentX = 0, currentY = 380;
   platforms.push({ x: 0, y: currentY, w: 500, h: 120 });
   currentX += 500;
 
-  let numSegments = 5 + Math.floor(levelNum * 1.2);
-  let enemySpeedBase = 1.6 + Math.min(levelNum * 0.25, 4.0);
-
-  for (let i = 0; i < numSegments; i++) {
-    let maxGap = Math.min(100 + levelNum * 4, 160);
-    let gap = 85 + Math.random() * (maxGap - 85);
-    currentX += gap;
-
-    let heightDelta = (Math.random() - 0.5) * 120;
-    currentY = Math.max(220, Math.min(390, currentY + heightDelta));
-    let platWidth = Math.max(150, 420 - levelNum * 12 + Math.random() * 80);
-
+  for (let i = 0; i < 6; i++) {
+    currentX += 90;
+    currentY = Math.max(220, Math.min(390, currentY + (Math.random() - 0.5) * 100));
+    let platWidth = 250;
     platforms.push({ x: currentX, y: currentY, w: platWidth, h: 450 - currentY });
+    stars.push({ x: currentX + 50, y: currentY - 40, collected: false });
+    currentX += platWidth;
+  }
 
-    let numStars = Math.floor(Math.random() * 3) + 1;
-    for (let s = 0; s < numStars; s++) {
-      stars.push({
-        x: currentX + 35 + s * 45,
-        y: currentY - 40,
-        collected: false
-      });
+  currentX += 80;
+  platforms.push({ x: currentX, y: 340, w: 400, h: 150 });
+  flag = { x: currentX + 200, y: 220, w: 50, h: 120 };
+
+  player.reset(80, 300);
+  player.lives = 3;
+  player.stars = 0;
+  totalStars = stars.length;
+  levelDisplay.innerText = `LEVEL ${currentLevel}`;
+  updateHUD();
+}
+
+function updateHUD() {
+  let hearts = '';
+  for (let i = 0; i < player.lives; i++) hearts += '❤️ ';
+  livesDisplay.innerText = hearts || '💀';
+  starsDisplay.innerText = `⭐ ${player.stars} / ${totalStars}`;
+}
+
+function update() {
+  if (gameState !== 'PLAYING') return;
+
+  if (keys.left) player.vx -= ACCEL;
+  if (keys.right) player.vx += ACCEL;
+  if (keys.up && player.grounded) {
+    player.vy = JUMP_FORCE;
+    player.grounded = false;
+  }
+
+  player.vx *= FRICTION;
+  player.vy += GRAVITY;
+  player.x += player.vx;
+  player.y += player.vy;
+  player.angle += player.vx / player.radius;
+
+  player.grounded = false;
+  for (let p of platforms) {
+    if (player.x + player.radius > p.x && player.x - player.radius < p.x + p.w) {
+      if (player.y + player.radius >= p.y && player.y + player.radius <= p.y + p.h + player.vy && player.vy >= 0) {
+        player.y = p.y - player.radius;
+        player.vy = 0;
+        player.grounded = true;
+      }
     }
+  }
 
-    if (levelNum >= 3 && Math.random() < 0.45 && platWidth >= 220) {
-      let spikeX = currentX + platWidth / 2 - 20;
-      spikes.push({ x: spikeX, y: currentY - 18, w: 40, h: 18 });
+  if (player.y > 500) {
+    player.reset(80, 300);
+    player.lives--;
+    updateHUD();
+    if(player.lives <= 0) {
+      gameState = 'GAMEOVER';
+      screenTitle.innerText = "GAME OVER";
+      screenOverlay.classList.remove('hidden');
     }
+  }
 
-    if (Math.random() < 0.5 + levelNum * 0.04 && platWidth >= 200) {
-      enemies.push({
-        x: currentX + platWidth / 2 + 30,
-        y: currentY - 35,
-        w: 35,
-        h: 35,
-        minX: currentX + 10,
+  for (let s of stars) {
+    if (s.collected) continue;
+    let dx = player.x - s.x;
+    let dy = player.y - s.y;
+    if (Math.sqrt(dx * dx + dy * dy) < player.radius + 15) {
+      s.collected = true;
+      player.stars++;
+      updateHUD();
+    }
+  }
+
+  let cameraTarget = player.x - canvas.width / 3;
+  cameraX += (cameraTarget - cameraX) * 0.1;
+  cameraX = Math.max(0, cameraX);
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(-Math.floor(cameraX), 0);
+
+  for (let p of platforms) {
+    ctx.fillStyle = '#8B5A2B';
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = '#7BED9F';
+    ctx.fillRect(p.x, p.y, p.w, 15);
+  }
+
+  for (let s of stars) {
+    if (s.collected) continue;
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#8B5A2B';
+  ctx.fillRect(flag.x, flag.y, 8, flag.h);
+  ctx.fillStyle = '#ff4757';
+  ctx.fillRect(flag.x + 8, flag.y + 10, 35, 25);
+
+  ctx.save();
+  ctx.translate(player.x, player.y);
+  ctx.rotate(player.angle);
+  ctx.fillStyle = '#ff4757';
+  ctx.beginPath();
+  ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function gameLoop() {
+  update();
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+actionBtn.onclick = () => {
+  currentLevel = 1;
+  generateLevel(1);
+  gameState = 'PLAYING';
+  screenOverlay.classList.add('hidden');
+};
+
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
+ntX + 10,
         maxX: currentX + platWidth - 45,
         dir: Math.random() > 0.5 ? 1 : -1,
         speed: enemySpeedBase + Math.random() * 0.8,
