@@ -19,6 +19,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            max-height: 100vh;
             overflow: hidden;
         }
         #game-container {
@@ -26,57 +27,61 @@
             flex-direction: column;
             align-items: center;
             background-color: #2f3640;
-            padding: 15px;
+            padding: 10px;
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             border: 4px solid #487eb0;
+            max-width: 95vw;
+            max-height: 98vh;
         }
         #top-bar {
             display: flex;
             justify-content: space-between;
-            width: 900px;
-            margin-bottom: 10px;
+            width: 100%;
+            max-width: 860px;
+            margin-bottom: 6px;
             background-color: #1e272e;
-            padding: 10px 20px;
+            padding: 8px 15px;
             border-radius: 8px;
             border: 2px solid #487eb0;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 16px;
         }
         .stat {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         canvas {
             background-color: #27ae60;
             border-radius: 8px;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
             cursor: pointer;
+            width: 100%;
+            max-width: 860px;
+            height: auto;
+            aspect-ratio: 15 / 8;
         }
-        #upgrade-instruction {
-            width: 900px;
-            text-align: center;
-            background-color: #353b48;
+        .upgrade-instruction {
+            font-size: 12px;
             color: #fbc531;
-            font-size: 13px;
-            font-weight: bold;
-            padding: 6px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            border: 1px dashed #718093;
+            margin: 4px 0;
+            text-align: center;
+            font-weight: 600;
         }
         #controls {
             display: grid;
-            grid-template-columns: repeat(4, 1fr) 200px;
-            gap: 10px;
-            width: 900px;
+            grid-template-columns: repeat(4, 1fr) 180px;
+            gap: 8px;
+            margin-top: 6px;
+            width: 100%;
+            max-width: 860px;
         }
         .tower-card {
             background-color: #353b48;
-            border: 3px solid #718093;
-            border-radius: 8px;
-            padding: 6px;
+            border: 2px solid #718093;
+            border-radius: 6px;
+            padding: 4px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -90,7 +95,7 @@
         .tower-card.selected {
             border-color: #4cd137;
             background-color: #2f3640;
-            box-shadow: 0 0 10px rgba(76, 209, 55, 0.5);
+            box-shadow: 0 0 8px rgba(76, 209, 55, 0.5);
         }
         .tower-card.disabled {
             opacity: 0.5;
@@ -101,25 +106,26 @@
         .tower-title {
             font-weight: bold;
             margin-bottom: 2px;
-            font-size: 12px;
+            font-size: 11px;
             text-align: center;
         }
         .tower-cost {
             color: #fbc531;
-            font-size: 11px;
+            font-size: 10px;
         }
         #wave-status {
             grid-column: span 1;
             background-color: #1e272e;
             color: #fbc531;
-            padding: 10px;
+            padding: 6px;
             font-weight: bold;
-            font-size: 15px;
-            border-radius: 8px;
+            font-size: 13px;
+            border-radius: 6px;
             border: 2px solid #487eb0;
             display: flex;
             align-items: center;
             justify-content: center;
+            text-align: center;
         }
     </style>
 </head>
@@ -134,7 +140,7 @@
     
     <canvas id="gameCanvas" width="900" height="480"></canvas>
     
-    <div id="upgrade-instruction">💡 Tip: Click on any placed cannon/tower on the map to upgrade it for 40 Gold (Max Level 5)!</div>
+    <div class="upgrade-instruction">💡 Click placed towers to upgrade them up to Level 5 (Cost: 40 Gold)</div>
 
     <div id="controls">
         <div class="tower-card selected" id="card-archer" onclick="selectTower('archer')">
@@ -174,7 +180,6 @@
 </div>
 
 <script>
-// --- Game Logic ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -230,8 +235,10 @@ let spawnTimer = 0;
 
 canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
-    mousePos.x = e.clientX - rect.left;
-    mousePos.y = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    mousePos.x = (e.clientX - rect.left) * scaleX;
+    mousePos.y = (e.clientY - rect.top) * scaleY;
 });
 
 canvas.addEventListener('click', () => {
@@ -240,7 +247,6 @@ canvas.addEventListener('click', () => {
     const gridX = Math.floor(mousePos.x / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2;
     const gridY = Math.floor(mousePos.y / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2;
     
-    // Check if clicking an existing tower to upgrade it (Cost: 40 Gold)
     let clickedTower = towers.find(t => t.x === gridX && t.y === gridY);
     if (clickedTower) {
         if (clickedTower.level < 5 && gold >= 40) {
@@ -254,7 +260,6 @@ canvas.addEventListener('click', () => {
         return;
     }
 
-    // Otherwise place a new tower
     if (canPlaceTower(gridX, gridY)) {
         const typeData = TOWER_TYPES[selectedTowerType];
         if (gold >= typeData.cost) {
@@ -871,7 +876,6 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Initialize
 updateUI();
 startAutoTimer();
 gameLoop();
