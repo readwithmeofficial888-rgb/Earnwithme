@@ -54,11 +54,22 @@
             box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
             cursor: pointer;
         }
+        #upgrade-instruction {
+            width: 900px;
+            text-align: center;
+            background-color: #353b48;
+            color: #fbc531;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 6px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border: 1px dashed #718093;
+        }
         #controls {
             display: grid;
             grid-template-columns: repeat(4, 1fr) 200px;
             gap: 10px;
-            margin-top: 10px;
             width: 900px;
         }
         .tower-card {
@@ -121,13 +132,10 @@
         <div class="stat">🧟 Wave: <span id="wave-val" style="color: #4cd137;">1</span></div>
     </div>
     
-    <!-- Instruction text above canvas -->
-    <div style="width: 900px; text-align: center; margin-bottom: 8px; font-size: 14px; color: #fbc531; font-weight: bold;">
-        💡 Click any placed tower to upgrade it for 80 Gold (Max Level 5)!
-    </div>
-
     <canvas id="gameCanvas" width="900" height="480"></canvas>
     
+    <div id="upgrade-instruction">💡 Tip: Click on any placed cannon/tower on the map to upgrade it for 40 Gold (Max Level 5)!</div>
+
     <div id="controls">
         <div class="tower-card selected" id="card-archer" onclick="selectTower('archer')">
             <span class="tower-title">🎯 Slinger</span>
@@ -232,11 +240,11 @@ canvas.addEventListener('click', () => {
     const gridX = Math.floor(mousePos.x / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2;
     const gridY = Math.floor(mousePos.y / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2;
     
-    // Check if clicking an existing tower to upgrade it (80 Gold per level)
+    // Check if clicking an existing tower to upgrade it (Cost: 40 Gold)
     let clickedTower = towers.find(t => t.x === gridX && t.y === gridY);
     if (clickedTower) {
-        if (clickedTower.level < 5 && gold >= 80) {
-            gold -= 80;
+        if (clickedTower.level < 5 && gold >= 40) {
+            gold -= 40;
             clickedTower.level++;
             clickedTower.maxHp += 30;
             clickedTower.hp = clickedTower.maxHp;
@@ -290,14 +298,13 @@ class Tower {
         this.angle = 0;
         this.hp = this.data.hp;
         this.maxHp = this.data.hp;
-        this.level = 1; // Max level 5
+        this.level = 1;
     }
 
     update() {
         if (this.cooldown > 0) this.cooldown--;
 
         let currentRange = this.data.range + (this.level - 1) * 15;
-
         let target = null;
         let maxDist = -1;
         
@@ -827,7 +834,7 @@ function drawGame() {
     }
 
     towers.forEach(t => t.draw());
-    zombies.changes ? zombies.forEach(z => z.draw()) : zombies.forEach(z => z.draw());
+    zombies.forEach(z => z.draw());
     projectiles.forEach(p => p.draw());
     enemyProjectiles.forEach(ep => ep.draw());
     particles.forEach(p => p.draw());
