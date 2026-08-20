@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zombie Outbreak: Cannon Siege</title>
+    <title>Zombie Outbreak: Endless Siege</title>
     <style>
         * {
             box-sizing: border-box;
@@ -140,7 +140,7 @@
     
     <canvas id="gameCanvas" width="900" height="480"></canvas>
     
-    <div class="upgrade-instruction">💡 Click placed towers to upgrade them up to Level 5 (Cost: 40 Gold)</div>
+    <div class="upgrade-instruction">💡 Click placed towers to upgrade them up to Level 10 (Cost: 50 Gold) for Endless Siege!</div>
 
     <div id="controls">
         <div class="tower-card selected" id="card-archer" onclick="selectTower('archer')">
@@ -183,7 +183,6 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Web Audio API for Bullet/Gunfire Sounds
 let audioCtx = null;
 
 function initAudio() {
@@ -230,9 +229,7 @@ function playBulletSound(type) {
             osc.start(now);
             osc.stop(now + 0.08);
         }
-    } catch (e) {
-        // Ignore audio errors if blocked before interaction
-    }
+    } catch (e) {}
 }
 
 let isGameOver = false;
@@ -302,8 +299,9 @@ canvas.addEventListener('click', () => {
     
     let clickedTower = towers.find(t => t.x === gridX && t.y === gridY);
     if (clickedTower) {
-        if (clickedTower.level < 5 && gold >= 40) {
-            gold -= 40;
+        // Updated to Level 10 and Cost 50 Gold
+        if (clickedTower.level < 10 && gold >= 50) {
+            gold -= 50;
             clickedTower.level++;
             clickedTower.maxHp += 30;
             clickedTower.hp = clickedTower.maxHp;
@@ -362,7 +360,7 @@ class Tower {
     update() {
         if (this.cooldown > 0) this.cooldown--;
 
-        let currentRange = this.data.range + (this.level - 1) * 15;
+        let currentRange = this.data.range + (this.level - 1) * 12;
         let target = null;
         let maxDist = -1;
         
@@ -377,7 +375,7 @@ class Tower {
         if (target) {
             this.angle = Math.atan2(target.y - this.y, target.x - this.x);
             if (this.cooldown <= 0) {
-                let effectiveRate = Math.max(4, Math.floor(this.data.rate - (this.level - 1) * 3));
+                let effectiveRate = Math.max(3, Math.floor(this.data.rate - (this.level - 1) * 2.5));
                 projectiles.push(new Projectile(this.x, this.y, target, this.type, this.level));
                 playBulletSound(this.type);
                 this.cooldown = effectiveRate;
@@ -399,8 +397,8 @@ class Tower {
 
         ctx.rotate(this.angle);
         ctx.fillStyle = this.data.color;
-        ctx.fillRect(0, -6, 18 + (this.level * 2), 12);
-        ctx.strokeRect(0, -6, 18 + (this.level * 2), 12);
+        ctx.fillRect(0, -6, 16 + (this.level * 1.5), 12);
+        ctx.strokeRect(0, -6, 16 + (this.level * 1.5), 12);
 
         ctx.beginPath();
         ctx.arc(0, 0, 10, 0, Math.PI * 2);
@@ -438,9 +436,9 @@ class Zombie {
         this.slowTimer = 0;
         this.attackCooldown = 0;
 
-        // Difficulty multiplier changed from 1.15 to 1.10 here
-        const statMult = Math.pow(1.10, wave - 1);
-        const speedMultiplier = Math.min(2.2, 1 + (wave - 1) * 0.05);
+        // Difficulty multiplier set back to 1.15 for endless progression
+        const statMult = Math.pow(1.15, wave - 1);
+        const speedMultiplier = Math.min(2.4, 1 + (wave - 1) * 0.04);
 
         if (type === 'witch') {
             this.hp = (220 + wave * 90) * statMult;
@@ -591,7 +589,8 @@ class Projectile {
         
         const dmgMap = { archer: 25, cannon: 45, ice: 15, gatling: 10, sniper: 180, plasma: 75, toxic: 30, nuke: 350 };
         let baseDmg = dmgMap[type] || 20;
-        this.damage = baseDmg * (1 + (level - 1) * 0.3);
+        // Scaled damage to help scale up to Level 10
+        this.damage = baseDmg * (1 + (level - 1) * 0.4);
     }
 
     update() {
@@ -615,7 +614,7 @@ class Projectile {
             const particleColor = this.type === 'nuke' ? '#e74c3c' : this.type === 'toxic' ? '#2ecc71' : '#e67e22';
             createParticles(this.x, this.y, particleColor, this.type === 'nuke' ? 30 : 15);
             zombies.forEach(z => {
-                if (Math.hypot(z.x - this.x, z.y - this.y) <= (data.splash + (this.level - 1) * 10)) {
+                if (Math.hypot(z.x - this.x, z.y - this.y) <= (data.splash + (this.level - 1) * 8)) {
                     z.hp -= this.damage;
                     if (this.type === 'toxic') z.slowTimer = 40;
                 }
@@ -623,7 +622,7 @@ class Projectile {
         } else {
             this.target.hp -= this.damage;
             if (this.type === 'ice') {
-                this.target.slowTimer = 90 + (this.level - 1) * 20;
+                this.target.slowTimer = 90 + (this.level - 1) * 15;
                 createParticles(this.x, this.y, '#3498db', 6);
             } else if (this.type === 'plasma') {
                 createParticles(this.x, this.y, '#8e44ad', 10);
@@ -635,7 +634,7 @@ class Projectile {
 
     draw() {
         ctx.beginPath();
-        ctx.arc(this.x, this.y, (this.type === 'nuke' ? 7 : this.type === 'cannon' ? 5 : 3) + (this.level > 3 ? 1 : 0), 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, (this.type === 'nuke' ? 7 : this.type === 'cannon' ? 5 : 3) + (this.level > 5 ? 1 : 0), 0, Math.PI * 2);
         ctx.fillStyle = this.type === 'ice' ? '#3498db' : this.type === 'plasma' ? '#9b59b6' : this.type === 'toxic' ? '#2ecc71' : this.type === 'nuke' ? '#e74c3c' : '#f1c40f';
         ctx.fill();
     }
@@ -875,7 +874,7 @@ function drawGame() {
         if (hoveredTower) {
             ctx.beginPath();
             ctx.arc(gridX, gridY, 20, 0, Math.PI * 2);
-            ctx.fillStyle = hoveredTower.level < 5 ? 'rgba(52, 152, 219, 0.4)' : 'rgba(231, 76, 60, 0.3)';
+            ctx.fillStyle = hoveredTower.level < 10 ? 'rgba(52, 152, 219, 0.4)' : 'rgba(231, 76, 60, 0.3)';
             ctx.fill();
         } else {
             const typeData = TOWER_TYPES[selectedTowerType];
