@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hydro-God: Cross-Platform Edition</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        body {
+            background-color: #030712;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1200px;
+            max-height: 700px;
+            box-shadow: 0 0 60px rgba(0, 162, 255, 0.45);
+            border: 2px solid #1e3a8a;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #020617, #0f172a);
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 15px;
+        }
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0,162,255,0.8);
+        }
+        .stat-box {
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid #3b82f6;
+            padding: 8px 14px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            backdrop-filter: blur(5px);
+        }
+        .bar-container {
+            width: 110px;
+            height: 8px;
+            background: #1e293b;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #60a5fa;
+        }
+        .bar-fill {
+            height: 100%;
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+        #health-fill { background: linear-gradient(90deg, #ef4444, #f87171); }
+        #mana-fill { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+
+        .boss-bar-wrapper {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 320px;
+            background: rgba(15, 23, 42, 0.92);
+            border: 2px solid #ef4444;
+            border-radius: 8px;
+            padding: 6px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+        #boss-health-fill {
+            width: 100%;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 4px;
+            transition: width 0.1s;
+        }
+
+        .hud-bottom {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            pointer-events: auto;
+            flex-wrap: wrap;
+        }
+        .spell-slot {
+            width: 55px;
+            height: 55px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid #3b82f6;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+            transition: transform 0.1s, border-color 0.1s;
+        }
+        .spell-slot.active {
+            border-color: #60a5fa;
+            transform: scale(1.08);
+            box-shadow: 0 0 20px #60a5fa;
+        }
+        .spell-key {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 9px;
+            color: #93c5fd;
+            font-weight: bold;
+        }
+        .spell-name {
+            font-size: 9px;
+            margin-top: 2px;
+            text-align: center;
+            color: #e2e8f0;
+        }
+        .spell-icon {
+            font-size: 16px;
+        }
+
+        .screen-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 7, 18, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+            pointer-events: auto;
+        }
+        h1 {
+            font-size: 28px;
+            background: linear-gradient(45deg, #3b82f6, #60a5fa, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        p {
+            color: #94a3b8;
+            margin-bottom: 20px;
+            font-size: 13px;
+            text-align: center;
+            max-width: 500px;
+            line-height: 1.4;
+        }
+        .btn {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.6);
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .hidden {
+            display: none !important;
+        }
+
+        .shop-cards {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+            pointer-events: auto;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .shop-card {
+            background: rgba(15, 23, 42, 0.92);
+            border: 2px solid #3b82f6;
+            border-radius: 10px;
+            padding: 15px;
+            width: 180px;
+            cursor: pointer;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .shop-card:hover {
+            transform: translateY(-3px);
+            border-color: #60a5fa;
+        }
+        .shop-card h3 {
+            color: #60a5fa;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .shop-card p {
+            font-size: 11px;
+            color: #cbd5e1;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 22px; }
+            p { font-size: 11px; }
+            .spell-slot { width: 50px; height: 50px; }
+            .hud-top { font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="1200" height="700"></canvas>
+        
+        <div id="ui-overlay">
+            <div class="hud-top">
+                <div class="stat-box">
+                    <div>CITY HP</div>
+                    <div class="bar-container"><div id="health-fill" class="bar-fill"></div></div>
+                </div>
+                <div class="stat-box" style="align-items: center;">
+                    <div id="wave-text">WAVE 1</div>
+                    <div style="font-size: 11px; color: #94a3b8;" id="score-text">SCORE: 0</div>
+                </div>
+                <div class="stat-box">
+                    <div>MANA</div>
+                    <div class="bar-container"><div id="mana-fill" class="bar-fill"></div></div>
+                </div>
+            </div>
+
+            <div class="boss-bar-wrapper" id="boss-hud">
+                <div style="font-size: 11px; color: #f87171; margin-bottom: 2px; font-weight: bold;" id="boss-name">INFERNO DRAGON LORD</div>
+                <div style="width: 100%; background: #1e293b; border-radius: 4px; overflow: hidden; border: 1px solid #ef4444;">
+                    <div id="boss-health-fill" style="width: 100%; height: 8px; background: #ef4444;"></div>
+                </div>
+            </div>
+
+            <div class="hud-bottom">
+                <div class="spell-slot active" id="slot-1" onclick="setSpell(1)">
+                    <span class="spell-key">1</span>
+                    <span class="spell-icon">💧</span>
+                    <span class="spell-name">Bolt</span>
+                </div>
+                <div class="spell-slot" id="slot-2" onclick="setSpell(2)">
+                    <span class="spell-key">2</span>
+                    <span class="spell-icon">⚡</span>
+                    <span class="spell-name">Laser</span>
+                </div>
+                <div class="spell-slot" id="slot-3" onclick="setSpell(3)">
+                    <span class="spell-key">3</span>
+                    <span class="spell-icon">🌊</span>
+                    <span class="spell-name">Tsunami</span>
+                </div>
+                <div class="spell-slot" id="slot-4" onclick="setSpell(4)">
+                    <span class="spell-key">4</span>
+                    <span class="spell-icon">❄️</span>
+                    <span class="spell-name">Ice</span>
+                </div>
+                <div class="spell-slot" style="border-color: #a855f7;" onclick="triggerGeyserBurst()">
+                    <span class="spell-key">SPC</span>
+                    <span class="spell-icon">🌀</span>
+                    <span class="spell-name">Geyser</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="main-screen" class="screen-overlay">
+            <h1 id="screen-title">HYDRO-GOD: TIDES</h1>
+            <p id="screen-desc">Playable on both PC & Mobile!<br><br>
+            <strong>PC:</strong> Mouse to Aim, Left Click to Shoot, [1-4] Spells, [Space] Geyser<br>
+            <strong>Mobile:</strong> Tap/Drag anywhere on screen to Aim & Shoot, tap icons below to change spells!</p>
+            <button class="btn" id="start-btn">START DEFENSE</button>
+        </div>
+
+        <div id="shop-screen" class="screen-overlay hidden">
+            <h1>WAVE CLEARED!</h1>
+            <p>Choose an upgrade perk before enemies grow stronger:</p>
+            <div class="shop-cards" id="shop-cards-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const healthFill = document.getElementById('health-fill');
+        const manaFill = document.getElementById('mana-fill');
+        const waveText = document.getElementById('wave-text');
+        const scoreText = document.getElementById('score-text');
+        const mainScreen = document.getElementById('main-screen');
+        const shopScreen = document.getElementById('shop-screen');
+        const startBtn = document.getElementById('start-btn');
+        const screenTitle = document.getElementById('screen-title');
+        const screenDesc = document.getElementById('screen-desc');
+        const shopCardsContainer = document.getElementById('shop-cards-container');
+        const bossHud = document.getElementById('boss-hud');
+        const bossHealthFill = document.getElementById('boss-health-fill');
+        const bossNameElem = document.getElementById('boss-name');
+
+        let gameState = 'MENU';
+        let score = 0;
+        let wave = 1;
+        let combo = 1;
+        let comboTimer = 0;
+        let enemiesToSpawn = 0;
+        let spawnInterval = 100;
+        let spawnCounter = 0;
+
+        const player = {
+            x: 130,
+            y: 500,
+            health: 100,
+            maxHealth: 100,
+            mana: 100,
+            maxMana: 100,
+            manaRegen: 0.4,
+            damageMultiplier: 1.0,
+            activeSpell: 1,
+            geyserCooldown: 0
+        };
+
+        const mouse = { x: 600, y: 350, down: false };
+        const keys = {};
+
+        // Coordinate scaling for responsive canvas
+        function getCanvasCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        // Mouse Events (PC)
+        window.addEventListener('mousemove', e => {
+            const pos = getCanvasCoords(e.clientX, e.clientY);
+            mouse.x = pos.x;
+            mouse.y = pos.y;
+        });
+        window.addEventListener('mousedown', e => { if (e.button === 0) mouse.down = true; });
+        window.addEventListener('mouseup', e => { if (e.button === 0) mouse.down = false; });
+
+        // Touch Events (Mobile)
+        window.addEventListener('touchstart', e => {
+            if(gameState !== 'PLAYING') return;
+            const touch = e.touches[0];
+            const pos = getCanvasCoords(touch.clientX, touch.clientY);
+            mouse.x = pos.x;
+            mouse.y = pos.y;
+            mouse.down = true;
+        }, {passive: false});
+
+        window.addEventListener('touchmove', e => {
+            if(gameState !== 'PLAYING') return;
+            const touch = e.touches[0];
+            const pos = getCanvasCoords(touch.clientX, touch.clientY);
+            mouse.x = pos.x;
+            mouse.y = pos.y;
+            mouse.down = true;
+        }, {passive: false});
+
+        window.addEventListener('touchend', e => {
+            mouse.down = false;
+        }, {passive: false});
+
+        // Keyboard Events (PC)
+        window.addEventListener('keydown', e => {
+            keys[e.key] = true;
+            if (e.key === '1') setSpell(1);
+            if (e.key === '2') setSpell(2);
+            if (e.key === '3') setSpell(3);
+            if (e.key === '4') setSpell(4);
+            if (e.key === ' ' && gameState === 'PLAYING') { triggerGeyserBurst(); e.preventDefault(); }
+        });
+        window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+        function setSpell(num) {
+            player.activeSpell = num;
+            document.querySelectorAll('.spell-slot').forEach((slot, idx) => {
+                if (idx < 4) {
+                    if (idx + 1 === num) slot.classList.add('active');
+                    else slot.classList.remove('active');
+                }
+            });
+        }
+
+        let projectiles = [];
+        let enemies = [];
+        let particles = [];
+        let floatingTexts = [];
+        let screenShake = 0;
+        let activeBoss = null;
+
+        class Projectile {
+            constructor(x, y, vx, vy, type) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.type = type; 
+                this.radius = type === 'tsunami' ? 65 : (type === 'ice' ? 8 : 6);
+                this.pierce = type === 'ice' ? 3 : 1;
+                this.damage = (type === 'tsunami' ? 65 : (type === 'ice' ? 26 : 20)) * player.damageMultiplier;
+                this.life = 120;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+                if (Math.random() < 0.6) {
+                    particles.push(new Particle(this.x, this.y, (Math.random()-0.5)*2, (Math.random()-0.5)*2, this.type === 'ice' ? '#93c5fd' : '#38bdf8', Math.random()*3 + 2, 20));
+                }
+            }
+            draw() {
+                ctx.save();
+                if (this.type === 'bolt') {
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = '#0284c7';
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'ice') {
+                    ctx.fillStyle = '#e0f2fe';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = '#38bdf8';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y - 12);
+                    ctx.lineTo(this.x + 8, this.y);
+                    ctx.lineTo(this.x, this.y + 12);
+                    ctx.lineTo(this.x - 8, this.y);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (this.type === 'tsunami') {
+                    ctx.fillStyle = 'rgba(14, 165, 233, 0.55)';
+                    ctx.strokeStyle = '#bae6fd';
+                    ctx.lineWidth = 4;
+                    ctx.shadowBlur = 25;
+                    ctx.shadowColor = '#0284c7';
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, Math.PI * 1.2, Math.PI * 1.8);
+                    ctx.lineTo(this.x + this.radius, this.y + 55);
+                    ctx.lineTo(this.x - this.radius, this.y + 55);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        class Enemy {
+            constructor(waveNum, forcedType = null) {
+                this.x = canvas.width + 60;
+                this.y = 480 + Math.random() * 150;
+                
+                let rand = Math.random();
+                if (forcedType) this.type = forcedType;
+                else if (waveNum >= 4 && rand < 0.15) this.type = 'boss';
+                else if (rand < 0.33) this.type = 'imp';
+                else if (rand < 0.6) this.type = 'brute';
+                else if (rand < 0.82) this.type = 'wraith';
+                else this.type = 'splitter';
+
+                const speedScale = 1 + (waveNum - 1) * 0.14;
+                const healthScale = 1 + (waveNum - 1) * 0.35;
+
+                if (this.type === 'imp') {
+                    this.speed = (2.0 + (waveNum * 0.12)) * speedScale;
+                    this.maxHealth = Math.round((30 + waveNum * 14) * healthScale);
+                    this.radius = 16;
+                    this.color = '#f97316';
+                } else if (this.type === 'brute') {
+                    this.speed = (1.2 + (waveNum * 0.08)) * speedScale;
+                    this.maxHealth = Math.round((90 + waveNum * 35) * healthScale);
+                    this.radius = 26;
+                    this.color = '#ef4444';
+                } else if (this.type === 'wraith') {
+                    this.speed = (2.5 + (waveNum * 0.15)) * speedScale;
+                    this.maxHealth = Math.round((45 + waveNum * 18) * healthScale);
+                    this.radius = 18;
+                    this.color = '#ea580c';
+                    this.oscillationSpeed = 0.09 + waveNum * 0.005;
+                    this.baseY = this.y;
+                    this.angleOffset = Math.random() * Math.PI;
+                } else if (this.type === 'splitter') {
+                    this.speed = (1.7 + (waveNum * 0.1)) * speedScale;
+                    this.maxHealth = Math.round((55 + waveNum * 22) * healthScale);
+                    this.radius = 22;
+                    this.color = '#dc2626';
+                } else if (this.type === 'boss') {
+                    this.speed = (0.8 + (waveNum * 0.05)) * speedScale;
+                    this.maxHealth = Math.round((500 + waveNum * 220) * healthScale);
+                    this.radius = 45;
+                    this.color = '#991b1b';
+                    activeBoss = this;
+                    bossHud.style.display = 'block';
+                    bossNameElem.innerText = `INFERNO DRAGON LORD (WAVE ${wave}) 🔥`;
+                }
+
+                this.health = this.maxHealth;
+            }
+
+            update() {
+                this.x -= this.speed;
+
+                if (this.type === 'wraith') {
+                    this.angleOffset += this.oscillationSpeed;
+                    this.y = this.baseY + Math.sin(this.angleOffset) * 55;
+                    if (this.y < 480) this.y = 480;
+                    if (this.y > 670) this.y = 670;
+                }
+
+                if (this.x < 190) {
+                    let damageToCity = this.type === 'boss' ? 45 : (this.type === 'brute' ? 22 : 12);
+                    player.health -= damageToCity;
+                    screenShake = 18;
+                    this.health = 0;
+                    floatingTexts.push(new FloatingText(`-${damageToCity} BASE!`, 190, 480, '#ef4444'));
+                    if (this.type === 'boss') {
+                        activeBoss = null;
+                        bossHud.style.display = 'none';
+                    }
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.shadowBlur = 18;
+                ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color;
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#fef08a';
+                ctx.beginPath();
+                ctx.arc(this.x - 4, this.y - 3, this.type === 'boss' ? 5 : 2.5, 0, Math.PI*2);
+                ctx.arc(this.x + 4, this.y - 3, this.type === 'boss' ? 5 : 2.5, 0, Math.PI*2);
+                ctx.fill();
+
+                if (this.type !== 'boss') {
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.fillRect(this.x - 20, this.y - this.radius - 12, 40, 6);
+                    ctx.fillStyle = '#22c55e';
+                    ctx.fillRect(this.x - 20, this.y - this.radius - 12, 40 * Math.max(0, this.health / this.maxHealth), 6);
+                }
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, vx, vy, color, size, life) {
+                this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+                this.color = color; this.size = size; this.life = life; this.maxLife = life;
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.life--; }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life / this.maxLife;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class FloatingText {
+            constructor(text, x, y, color) {
+                this.text = text; this.x = x; this.y = y; this.color = color; this.life = 45;
+            }
+            update() { this.y -= 1.2; this.life--; }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life / 45;
+                ctx.fillStyle = this.color;
+                ctx.font = 'bold 16px Segoe UI';
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.restore();
+            }
+        }
+
+        let shootCooldown = 0;
+        let laserActive = false;
+
+        function triggerGeyserBurst() {
+            if (player.geyserCooldown > 0 || player.mana < 35) return;
+            player.mana -= 35;
+            player.geyserCooldown = 180;
+            screenShake = 22;
+
+            floatingTexts.push(new FloatingText('GEYSER BURST!', player.x, player.y - 80, '#38bdf8'));
+
+            enemies.forEach(en => {
+                let dist = Math.hypot(en.x - player.x, en.y - player.y);
+                if (dist < 260) {
+                    en.x += 130;
+                    en.health -= 75 * player.damageMultiplier;
+                    for (let p = 0; p < 8; p++) {
+                        particles.push(new Particle(en.x, en.y, (Math.random()-0.5)*6, (Math.random()-0.5)*6, '#38bdf8', 4, 25));
+                    }
+                }
+            });
+        }
+
+        function handleInput() {
+            if (gameState !== 'PLAYING') return;
+
+            if (player.geyserCooldown > 0) player.geyserCooldown--;
+
+            if (player.activeSpell === 2 && mouse.down && player.mana >= 0.7) {
+                laserActive = true;
+                player.mana -= 0.7;
+                screenShake = Math.max(screenShake, 3);
+                
+                const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+                const beamEndX = player.x + Math.cos(angle) * 850;
+                const beamEndY = player.y + Math.sin(angle) * 850;
+
+                enemies.forEach(en => {
+                    let dist = Math.abs((beamEndY - player.y)*en.x - (beamEndX - player.x)*en.y + beamEndX*player.y - beamEndY*player.x) / 
+                               Math.sqrt(Math.pow(beamEndY - player.y, 2) + Math.pow(beamEndX - player.x, 2));
+                    if (dist < en.radius + 15 && en.x > player.x) {
+                        en.health -= 2.2 * player.damageMultiplier;
+                    }
+                });
+                return;
+            } else {
+                laserActive = false;
+            }
+
+            if (shootCooldown > 0) shootCooldown--;
+
+            if (mouse.down && shootCooldown === 0 && player.activeSpell !== 2) {
+                const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+
+                if (player.activeSpell === 1) {
+                    if (player.mana >= 7) {
+                        player.mana -= 7;
+                        projectiles.push(new Projectile(player.x + 30, player.y - 10, Math.cos(angle)*13, Math.sin(angle)*13, 'bolt'));
+                        shootCooldown = 11;
+                    }
+                } else if (player.activeSpell === 3) {
+                    if (player.mana >= 40) {
+                        player.mana -= 40;
+                        projectiles.push(new Projectile(player.x + 30, player.y, 6.5, 0, 'tsunami'));
+                        shootCooldown = 55;
+                        screenShake = 22;
+                    }
+                } else if (player.activeSpell === 4) {
+                    if (player.mana >= 22) {
+                        player.mana -= 22;
+                        for (let i = -2; i <= 2; i++) {
+                            let spreadAngle = angle + i * 0.12;
+                            projectiles.push(new Projectile(player.x + 30, player.y - 10, Math.cos(spreadAngle)*11, Math.sin(spreadAngle)*11, 'ice'));
+                        }
+                        shootCooldown = 28;
+                    }
+                }
+            }
+        }
+
+        startBtn.addEventListener('click', () => {
+            resetGame();
+            gameState = 'PLAYING';
+            mainScreen.style.opacity = '0';
+            setTimeout(() => mainScreen.classList.add('hidden'), 300);
+        });
+
+        function resetGame() {
+            score = 0; wave = 1; combo = 1; comboTimer = 0;
+            player.health = 100; player.maxHealth = 100;
+            player.mana = 100; player.maxMana = 100; player.damageMultiplier = 1.0;
+            enemies = []; projectiles = []; particles = []; floatingTexts = [];
+            activeBoss = null; bossHud.style.display = 'none';
+            enemiesToSpawn = 7; spawnInterval = 100; spawnCounter = 0;
+        }
+
+        function triggerGameOver() {
+            gameState = 'GAMEOVER';
+            bossHud.style.display = 'none';
+            screenTitle.innerText = 'DEFENSE BREACHED';
+            screenDesc.innerHTML = `The fire horde overcame the city!<br>You survived up to <strong>Wave ${wave}</strong> with score <strong>${score}</strong>.`;
+            startBtn.innerText = 'PLAY AGAIN';
+            mainScreen.classList.remove('hidden');
+            setTimeout(() => mainScreen.style.opacity = '1', 10);
+        }
+
+        const perkPool = [
+            { title: "🌊 Tidal Mastery", desc: "+35% Damage to all water spells.", apply: () => { player.damageMultiplier += 0.35; } },
+            { title: "💧 Hydro Surge", desc: "+50 Max Mana & faster regen.", apply: () => { player.maxMana += 50; player.mana = player.maxMana; player.manaRegen += 0.15; } },
+            { title: "🏙️ City Restoration", desc: "Restore city health back to full.", apply: () => { player.health = player.maxHealth; } },
+            { title: "⚡ Overcharged Core", desc: "Boosts damage & mana speed.", apply: () => { player.damageMultiplier += 0.25; player.manaRegen += 0.2; } }
+        ];
+
+        function openShop() {
+            gameState = 'SHOP';
+            shopCardsContainer.innerHTML = '';
+            let shuffled = [...perkPool].sort(() => 0.5 - Math.random());
+            shuffled.slice(0, 3).forEach(perk => {
+                let card = document.createElement('div');
+                card.className = 'shop-card';
+                card.innerHTML = `<h3>${perk.title}</h3><p>${perk.desc}</p>`;
+                card.addEventListener('click', () => {
+                    perk.apply();
+                    shopScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        shopScreen.classList.add('hidden');
+                        wave++;
+                        enemiesToSpawn = 6 + wave * 4;
+                        spawnInterval = Math.max(30, 100 - (wave * 6));
+                        gameState = 'PLAYING';
+                    }, 300);
+                });
+                shopCardsContainer.appendChild(card);
+            });
+            shopScreen.classList.remove('hidden');
+            setTimeout(() => shopScreen.style.opacity = '1', 10);
+        }
+
+        function manageWaves() {
+            if (enemies.length === 0 && enemiesToSpawn <= 0 && gameState === 'PLAYING') {
+                if (activeBoss) activeBoss = null;
+                bossHud.style.display = 'none';
+                openShop();
+                return;
+            }
+            if (enemiesToSpawn > 0 && gameState === 'PLAYING') {
+                spawnCounter++;
+                if (spawnCounter >= spawnInterval) {
+                    enemies.push(new Enemy(wave));
+                    enemiesToSpawn--;
+                    spawnCounter = 0;
+                }
+            }
+        }
+
+        function update() {
+            if (gameState !== 'PLAYING') return;
+            manageWaves();
+            handleInput();
+
+            if (player.mana < player.maxMana) {
+                player.mana = Math.min(player.maxMana, player.mana + player.manaRegen);
+            }
+            if (screenShake > 0) screenShake *= 0.85;
+
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                projectiles[i].update();
+                if (projectiles[i].life <= 0 || projectiles[i].x > canvas.width + 100) projectiles.splice(i, 1);
+            }
+
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                enemies[i].update();
+                if (enemies[i].health <= 0) {
+                    score += (enemies[i].maxHealth > 200 ? 120 : 30);
+                    if (enemies[i].type === 'splitter') {
+                        for (let s = 0; s < 2; s++) {
+                            let mini = new Enemy(wave, 'imp');
+                            mini.x = enemies[i].x; mini.y = enemies[i].y;
+                            mini.maxHealth = 25; mini.health = 25;
+                            enemies.push(mini);
+                        }
+                    }
+                    if (enemies[i] === activeBoss) {
+                        activeBoss = null; bossHud.style.display = 'none'; score += 350;
+                    }
+                    enemies.splice(i, 1);
+                }
+            }
+
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                let proj = projectiles[i];
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    let en = enemies[j];
+                    if (Math.hypot(proj.x - en.x, proj.y - en.y) < proj.radius + en.radius) {
+                        en.health -= proj.damage;
+                        if (proj.type !== 'tsunami') {
+                            proj.pierce--;
+                            if (proj.pierce <= 0) { projectiles.splice(i, 1); break; }
+                        }
+                    }
+                }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); if (particles[i].life <= 0) particles.splice(i, 1); }
+            for (let i = floatingTexts.length - 1; i >= 0; i--) { floatingTexts[i].update(); if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); }
+
+            if (player.health <= 0) { player.health = 0; triggerGameOver(); }
+
+            healthFill.style.width = Math.max(0, (player.health / player.maxHealth) * 100) + '%';
+            manaFill.style.width = (player.mana / player.maxMana) * 100 + '%';
+            waveText.innerText = `WAVE ${wave}`;
+            scoreText.innerText = `SCORE: ${score}`;
+
+            if (activeBoss) {
+                bossHealthFill.style.width = Math.max(0, (activeBoss.health / activeBoss.maxHealth) * 100) + '%';
+            }
+        }
+
+        function drawBackground() {
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGrad.addColorStop(0, '#020617'); skyGrad.addColorStop(1, '#1e1b4b');
+            ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#060911';
+            ctx.fillRect(40, 240, 110, 240); ctx.fillRect(160, 170, 130, 310);
+            ctx.fillRect(310, 210, 100, 270); ctx.fillRect(430, 140, 150, 340);
+            ctx.fillRect(600, 190, 120, 290); ctx.fillRect(740, 110, 140, 370);
+            ctx.fillRect(900, 220, 170, 260);
+
+            let roadGrad = ctx.createLinearGradient(0, 480, 0, canvas.height);
+            roadGrad.addColorStop(0, '#1e293b'); roadGrad.addColorStop(1, '#0b0f19');
+            ctx.fillStyle = roadGrad; ctx.fillRect(0, 480, canvas.width, 220);
+
+            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.setLineDash([30, 20]);
+            ctx.beginPath(); ctx.moveTo(0, 590); ctx.lineTo(canvas.width, 590); ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function drawStickmanWaterGod() {
+            ctx.save();
+            ctx.strokeStyle = '#38bdf8'; ctx.fillStyle = '#38bdf8'; ctx.lineWidth = 4;
+            ctx.shadowBlur = 16; ctx.shadowColor = '#0284c7';
+
+            let px = player.x, py = player.y;
+            ctx.beginPath(); ctx.arc(px, py - 65, 18, Math.PI, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(px, py - 45, 12, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(px, py - 33); ctx.lineTo(px, py + 10); ctx.stroke();
+
+            let angle = Math.atan2(mouse.y - py, mouse.x - px);
+            let handX = px + Math.cos(angle) * 35;
+            let handY = (py - 20) + Math.sin(angle) * 35;
+
+            ctx.beginPath(); ctx.moveTo(px, py - 20); ctx.lineTo(handX, handY); ctx.stroke();
+            ctx.beginPath(); ctx.arc(handX, handY, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(px, py + 10); ctx.lineTo(px - 15, py + 55);
+            ctx.moveTo(px, py + 10); ctx.lineTo(px + 15, py + 55); ctx.stroke();
+
+            if (laserActive) {
+                ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 8;
+                ctx.beginPath(); ctx.moveTo(handX, handY);
+                ctx.lineTo(px + Math.cos(angle) * 950, py + Math.sin(angle) * 950);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            if (screenShake > 0) {
+                ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+            }
+            drawBackground();
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)'; ctx.lineWidth = 6;
+            ctx.beginPath(); ctx.moveTo(190, 480); ctx.lineTo(190, 700); ctx.stroke();
+
+            drawStickmanWaterGod();
+            enemies.forEach(en => en.draw());
+            projectiles.forEach(proj => proj.draw());
+            particles.forEach(p => p.draw());
+            floatingTexts.forEach(ft => ft.draw());
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
