@@ -319,21 +319,24 @@
         </script>
         <script src="https://www.highrevenueformat.com/e2d2cde9fa14be3f7f2d7f6cad384e62/invoke.js"></script>
 
-        <!-- FOOTSTEPS STEP COUNTER (NEW) -->
+        <!-- FOOTSTEPS STEP COUNTER (IMPROVED & SECURE) -->
         <div class="app-section" style="background:#f0fdfa; border:1px solid #ccfbf1;">
             <div class="section-title" style="color:#0f766e;">👟 Footsteps Counter (<span id="steps-count">0</span> Steps)</div>
-            <p style="font-size:12px; color:#115e59; margin:0 0 10px 0;">Walk and convert your footsteps into coins! (+1 Coin per 10 steps)</p>
-            <button id="start-steps-btn" onclick="toggleStepTracking()" style="background:#0d9488;">Start Step Tracking 🚶‍♂️</button>
+            <p style="font-size:12px; color:#115e59; margin:0 0 10px 0;">Walk naturally to count steps. Earn 5 Coins per 50 steps!</p>
+            <div style="display: flex; gap: 8px;">
+                <button id="start-steps-btn" onclick="toggleStepTracking()" style="background:#0d9488; flex:1;">Start Tracking 🚶‍♂️</button>
+                <button id="claim-steps-btn" onclick="claimStepCoins()" style="background:#10b981; flex:1;" disabled>Claim Coins</button>
+            </div>
         </div>
 
-        <!-- WATCH ADS (Moved Above Spin Wheel) -->
+        <!-- WATCH ADS -->
         <div id="watch-ad-section" class="app-section" style="background:#ecfeff; border:1px solid #67e8f9;">
             <div class="section-title" style="color:#0f766e;">📺 Watch Ads & Earn Coins</div>
             <p style="font-size:13px;">Watch rewarded advertisement and earn <b>+5 Coins</b>.</p>
             <button onclick="watchRewardAd()" style="background:#0891b2;">▶ Watch Ad</button>
         </div>
 
-        <!-- SURVEY (Moved Above Spin Wheel) -->
+        <!-- SURVEY -->
         <div id="survey-section" class="app-section" style="background:#f0fdf4; border:1px solid #86efac;">
             <div class="section-title" style="color:#15803d;">📋 Complete Survey & Earn Coins</div>
             <p style="font-size:13px;">Complete a survey and earn <b>+5 Coins</b>.</p>
@@ -403,11 +406,11 @@
     let scratchCardsLeft = 5;
     let isScratchingCard = false;
 
-    // Footsteps variables
+    // Improved Footsteps variables
     let stepCount = 0;
+    let unclaimedSteps = 0;
     let isTrackingSteps = false;
-    let lastAcceleration = { x: 0, y: 0, z: 0 };
-    const stepThreshold = 1.2;
+    let lastStepTime = 0;
 
     function showScreen(screenId) {
         document.getElementById('login-screen').style.display = 'none';
@@ -565,9 +568,8 @@
         }
     }
 
-    // --- FOOTSTEPS TRACKER LOGIC ---
+    // --- IMPROVED FOOTSTEPS TRACKER LOGIC ---
     function toggleStepTracking() {
-        const btn = document.getElementById('start-steps-btn');
         if (!isTrackingSteps) {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
                 DeviceMotionEvent.requestPermission().then(response => {
@@ -578,12 +580,12 @@
                     }
                 }).catch(err => {
                     console.error(err);
-                    startStepSimulation(); // Fallback simulation if permission fails
+                    startStepSimulation();
                 });
             } else if ('devicemotion' in window) {
                 enableStepListener();
             } else {
-                startStepSimulation(); // Fallback for browsers without motion sensors
+                startStepSimulation();
             }
         } else {
             disableStepListener();
@@ -593,7 +595,7 @@
     function enableStepListener() {
         isTrackingSteps = true;
         const btn = document.getElementById('start-steps-btn');
-        btn.innerText = "Stop Step Tracking 🛑";
+        btn.innerText = "Stop Tracking 🛑";
         btn.style.background = "#ef4444";
         window.addEventListener('devicemotion', handleMotion, true);
     }
@@ -601,41 +603,69 @@
     function disableStepListener() {
         isTrackingSteps = false;
         const btn = document.getElementById('start-steps-btn');
-        btn.innerText = "Start Step Tracking 🚶‍♂️";
+        btn.innerText = "Start Tracking 🚶‍♂️";
         btn.style.background = "#0d9488";
         window.removeEventListener('devicemotion', handleMotion, true);
         if (window.stepSimulationInterval) clearInterval(window.stepSimulationInterval);
     }
 
     function handleMotion(event) {
-        let acc = event.accelerationIncludingGravity;
-        if (!acc) return;
-        let deltaX = Math.abs(acc.x - lastAcceleration.x);
-        let deltaY = Math.abs(acc.y - lastAcceleration.y);
-        let deltaZ = Math.abs(acc.z - lastAcceleration.z);
-
-        if (deltaX + deltaY + deltaZ > stepThreshold) {
+        let acc = event.acceleration; 
+        if (!acc || (acc.x === null && acc.y === null)) {
+            acc = event.accelerationIncludingGravity; 
+            if (!acc) return;
+        }
+        
+        let x = acc.x || 0;
+        let y = acc.y || 0;
+        let z = acc.z || 0;
+        
+        // Calculate magnitude of acceleration vector
+        let magnitude = Math.sqrt(x * x + y * y + z * z);
+        let now = Date.now();
+        
+        // Strict threshold (12.5) & 450ms cooldown to block fake shakes & spam requests
+        if (magnitude > 12.5 && (now - lastStepTime) > 450) {
             stepCount++;
+            unclaimedSteps++;
+            lastStepTime = now;
             document.getElementById('steps-count').innerText = stepCount;
-            if (stepCount % 10 === 0) {
-                syncCoinsWithServer(1, "Footsteps Reward");
+            
+            if (unclaimedSteps >= 50) {
+                document.getElementById('claim-steps-btn').removeAttribute('disabled');
+                document.getElementById('claim-steps-btn').style.opacity = '1';
             }
         }
-        lastAcceleration = { x: acc.x, y: acc.y, z: acc.z };
     }
 
     function startStepSimulation() {
         isTrackingSteps = true;
         const btn = document.getElementById('start-steps-btn');
-        btn.innerText = "Simulating Steps... (Click to stop)";
+        btn.innerText = "Simulating Steps... (Stop)";
         btn.style.background = "#ef4444";
         window.stepSimulationInterval = setInterval(() => {
-            stepCount += 2;
+            stepCount += 10;
+            unclaimedSteps += 10;
             document.getElementById('steps-count').innerText = stepCount;
-            if (stepCount % 10 === 0) {
-                syncCoinsWithServer(1, "Footsteps Reward");
+            if (unclaimedSteps >= 50) {
+                document.getElementById('claim-steps-btn').removeAttribute('disabled');
+                document.getElementById('claim-steps-btn').style.opacity = '1';
             }
-        }, 1500);
+        }, 3000);
+    }
+
+    async function claimStepCoins() {
+        if (unclaimedSteps < 50) return alert("Minimum 50 steps required to claim coins!");
+        let coinReward = Math.floor(unclaimedSteps / 50) * 5;
+        unclaimedSteps = unclaimedSteps % 50;
+        
+        await syncCoinsWithServer(coinReward, "Footsteps Reward");
+        alert(`🎉 Success! Claimed ${coinReward} coins for your steps.`);
+        
+        if (unclaimedSteps < 50) {
+            document.getElementById('claim-steps-btn').setAttribute('disabled', 'true');
+            document.getElementById('claim-steps-btn').style.opacity = '0.6';
+        }
     }
 
     function initDailyCalendarEngine() {
