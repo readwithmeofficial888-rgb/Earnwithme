@@ -319,7 +319,7 @@
         </script>
         <script src="https://www.highrevenueformat.com/e2d2cde9fa14be3f7f2d7f6cad384e62/invoke.js"></script>
 
-        <!-- FOOTSTEPS STEP COUNTER (FIXED & BALANCED SENSITIVITY) -->
+        <!-- FOOTSTEPS STEP COUNTER (GRAVITY DELTA SENSITIVE FIX) -->
         <div class="app-section" style="background:#f0fdfa; border:1px solid #ccfbf1;">
             <div class="section-title" style="color:#0f766e;">👟 Footsteps Counter (<span id="steps-count">0</span> Steps)</div>
             <p style="font-size:12px; color:#115e59; margin:0 0 10px 0;">Walk naturally with phone. Earn 5 Coins per 50 steps!</p>
@@ -406,7 +406,7 @@
     let scratchCardsLeft = 5;
     let isScratchingCard = false;
 
-    // Fixed Footsteps variables
+    // Footsteps variables
     let stepCount = 0;
     let unclaimedSteps = 0;
     let isTrackingSteps = false;
@@ -568,7 +568,7 @@
         }
     }
 
-    // --- FIXED FOOTSTEPS TRACKER LOGIC ---
+    // --- FULLY FIXED GRAVITY-DELTA STEP TRACKER LOGIC ---
     function toggleStepTracking() {
         if (!isTrackingSteps) {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -610,11 +610,8 @@
     }
 
     function handleMotion(event) {
-        let acc = event.acceleration; 
-        if (!acc || (acc.x === null && acc.y === null)) {
-            acc = event.accelerationIncludingGravity; 
-            if (!acc) return;
-        }
+        let acc = event.accelerationIncludingGravity || event.acceleration; 
+        if (!acc) return;
         
         let x = acc.x || 0;
         let y = acc.y || 0;
@@ -623,8 +620,11 @@
         let magnitude = Math.sqrt(x * x + y * y + z * z);
         let now = Date.now();
         
-        // Balanced threshold (10.5) and 350ms cooldown for smooth and accurate counting
-        if (magnitude > 10.5 && (now - lastStepTime) > 350) {
+        // GRAVITY DELTA LOGIC: Removes earth's gravity (~9.8) and tracks subtle changes from normal walking
+        let delta = Math.abs(magnitude - 9.8);
+        
+        // 1.1 delta is sensitive enough for normal pocket/hand walking without hard shaking, 300ms prevents spamming
+        if (delta > 1.1 && (now - lastStepTime) > 300) {
             stepCount++;
             unclaimedSteps++;
             lastStepTime = now;
