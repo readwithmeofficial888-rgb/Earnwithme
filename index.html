@@ -319,7 +319,7 @@
         </script>
         <script src="https://www.highrevenueformat.com/e2d2cde9fa14be3f7f2d7f6cad384e62/invoke.js"></script>
 
-        <!-- FOOTSTEPS STEP COUNTER (GRAVITY DELTA SENSITIVE FIX) -->
+        <!-- FOOTSTEPS STEP COUNTER (DOUBLE COUNTING FIX: DELTA > 1.3 & 500MS COOLDOWN) -->
         <div class="app-section" style="background:#f0fdfa; border:1px solid #ccfbf1;">
             <div class="section-title" style="color:#0f766e;">👟 Footsteps Counter (<span id="steps-count">0</span> Steps)</div>
             <p style="font-size:12px; color:#115e59; margin:0 0 10px 0;">Walk naturally with phone. Earn 5 Coins per 50 steps!</p>
@@ -568,7 +568,7 @@
         }
     }
 
-    // --- FULLY FIXED GRAVITY-DELTA STEP TRACKER LOGIC ---
+    // --- FULLY FIXED STEP TRACKER (THRESHOLD 1.3 & COOLDOWN 500MS) ---
     function toggleStepTracking() {
         if (!isTrackingSteps) {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -620,11 +620,11 @@
         let magnitude = Math.sqrt(x * x + y * y + z * z);
         let now = Date.now();
         
-        // GRAVITY DELTA LOGIC: Removes earth's gravity (~9.8) and tracks subtle changes from normal walking
+        // Gravity removal & Delta calculation
         let delta = Math.abs(magnitude - 9.8);
         
-        // 1.1 delta is sensitive enough for normal pocket/hand walking without hard shaking, 300ms prevents spamming
-        if (delta > 1.1 && (now - lastStepTime) > 300) {
+        // Updated: delta > 1.3 and 500ms cooldown prevents double counting per step
+        if (delta > 1.3 && (now - lastStepTime) > 500) {
             stepCount++;
             unclaimedSteps++;
             lastStepTime = now;
