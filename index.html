@@ -250,19 +250,7 @@
         <script async="async" data-cfasync="false" src="https://pl31169739.profitableratecpmnetwork.com/363489079b051506b0a540e9d85ad315/invoke.js"></script>
         <div id="container-363489079b051506b0a540e9d85ad315"></div>
 
-        <!-- 🎮 ADGEM GAME OFFERWALL SECTION -->
-        <div class="app-section" style="background:#f5f3ff; border:1px solid #c7d2fe;">
-            <div class="section-title" style="color:#4f46e5;">🎮 Play Mobile Games & Earn Coins</div>
-            <p style="font-size:13px; color:#475569; margin-bottom:12px;">Complete missions & download games to get instant coins!</p>
-            <iframe id="adgem-offerwall-iframe" 
-                src="" 
-                width="100%" 
-                height="600px" 
-                frameborder="0" 
-                style="border-radius: 12px; background: white;">
-            </iframe>
-        </div>
-
+       
         <!-- Games Section (6 Games) -->
         <div class="app-section">
             <div class="section-title">🕹️ Mini Fun Games</div>
@@ -441,20 +429,7 @@
         showScreen('login-screen');
     }
 
-    // --- ADGEM OFFERWALL LOADER FUNCTION ---
-    function loadAdGemOfferwall() {
-        const userId = localStorage.getItem('user_id');
-        if (!userId) return;
-        
-        // ⚠️ Yahan apni asli AdGem App ID daliye jo aapko Dashboard me mili hai
-        const adgemAppId = "kgji2di2db9lf53ieafl5854"; 
-        
-        const iframeUrl = `https://wall.adgem.com/wall?appid=${adgemAppId}&player_id=${userId}`;
-        const iframeElement = document.getElementById('adgem-offerwall-iframe');
-        if (iframeElement) {
-            iframeElement.src = iframeUrl;
-        }
-    }
+    
 
     // --- DIRECT SUPABASE LOGIN ---
     async function handleLogin() {
