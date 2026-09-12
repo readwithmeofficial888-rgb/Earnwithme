@@ -14,9 +14,14 @@
         const SUPABASE_URL = 'https://undclwczppnlrbesqjjg.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_0bz1jb41MnRL06w89ihx6g__C3dIQit';
         
-        // Initialize Supabase Client globally
-        window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log("✅ Supabase initialized successfully!");
+        // Safely Initialize Supabase Client globally to avoid re-initialization crashes
+        let supabaseClient = null;
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log("✅ Supabase initialized successfully!");
+        } catch (e) {
+            console.error("❌ Supabase initialization failed:", e);
+        }
     </script>
 
     <!-- Modern Google Font -->
@@ -250,7 +255,6 @@
         <script async="async" data-cfasync="false" src="https://pl31169739.profitableratecpmnetwork.com/363489079b051506b0a540e9d85ad315/invoke.js"></script>
         <div id="container-363489079b051506b0a540e9d85ad315"></div>
 
-       
         <!-- Games Section (6 Games) -->
         <div class="app-section">
             <div class="section-title">🕹️ Mini Fun Games</div>
@@ -310,7 +314,7 @@
         </div>
 
         <script>
-          atOptions = {
+          let atOptions = {
             'key' : 'e2d2cde9fa14be3f7f2d7f6cad384e62',
             'format' : 'iframe',
             'height' : 60,
@@ -374,7 +378,6 @@
             <div class="quiz-scoreboard">
                 <span>Score: <span id="session-score">0</span> pts</span>
                 <span>Earned: +<span id="session-coins">0</span> Coins</span>
-                <span id="coin-balance">0 Coins</span>
             </div>
         </div>
 
@@ -429,8 +432,6 @@
         showScreen('login-screen');
     }
 
-    
-
     // --- DIRECT SUPABASE LOGIN ---
     async function handleLogin() {
         const name = document.getElementById('name-input').value.trim();
@@ -439,16 +440,21 @@
         const rawMobile = document.getElementById('username-input').value.trim();
 
         if (!name || !email || !rawMobile) return alert("Sare fields bharna zaroori hai!");
+        if (!supabaseClient) return alert("Supabase client initialized nahi hai!");
 
         try {
-            let { data, error } = await window.supabase
+            let { data, error } = await supabaseClient
                 .from('profiles')
                 .select('*')
                 .eq('user_id', rawMobile)
                 .maybeSingle();
 
+            if (error) {
+                console.error("Query error:", error);
+            }
+
             if (!data) {
-                const { error: insertError } = await window.supabase.from('profiles').insert([
+                const { error: insertError } = await supabaseClient.from('profiles').insert([
                     { 
                         user_id: rawMobile, 
                         name: name, 
@@ -472,7 +478,6 @@
             await updateBalanceUI(); 
             initDailyCalendarEngine();
             checkQuizLockStatus();
-            loadAdGemOfferwall();
         } catch (error) {
             console.error("Error:", error);
             alert("Supabase connect nahi ho raha hai! Check Console for details.");
@@ -483,12 +488,12 @@
         const userId = localStorage.getItem('user_id');
         const balanceElement = document.getElementById('coin-balance');
         
-        if (!userId) return;
+        if (!userId || !supabaseClient) return;
 
         balanceElement.innerText = "Loading...";
 
         try {
-            const { data, error } = await window.supabase
+            const { data, error } = await supabaseClient
                 .from('profiles')
                 .select('*')
                 .eq('user_id', userId)
@@ -511,14 +516,14 @@
     // --- DIRECT SUPABASE COINS SYNC ---
     async function syncCoinsWithServer(coinsToAdd, activityType) {
         const userId = localStorage.getItem('user_id');
-        if (!userId) return;
+        if (!userId || !supabaseClient) return;
 
         try {
-            let { data } = await window.supabase.from('profiles').select('coins').eq('user_id', userId).maybeSingle();
+            let { data } = await supabaseClient.from('profiles').select('coins').eq('user_id', userId).maybeSingle();
             let currentCoins = data ? (data.coins || 0) : 0;
             let newCoins = currentCoins + coinsToAdd;
 
-            const { error } = await window.supabase
+            const { error } = await supabaseClient
                 .from('profiles')
                 .update({ coins: newCoins })
                 .eq('user_id', userId);
@@ -536,7 +541,7 @@
     // --- DIRECT SUPABASE WITHDRAWAL ---
     async function processInstantUPI(method) {
         const userDetail = prompt(`Enter ${method} ID for withdrawal:`);
-        if (!userDetail) return;
+        if (!userDetail || !supabaseClient) return;
 
         let currentBalanceText = document.getElementById('coin-balance').innerText;
         let currentBalance = parseInt(currentBalanceText) || 0;
@@ -548,14 +553,14 @@
         const userId = localStorage.getItem('user_id');
 
         try {
-            const { error: updateError } = await window.supabase
+            const { error: updateError } = await supabaseClient
                 .from('profiles')
                 .update({ coins: 0, upi_id: userDetail })
                 .eq('user_id', userId);
 
             if (updateError) throw updateError;
 
-            await window.supabase.from('withdraw_requests').insert([{
+            await supabaseClient.from('withdraw_requests').insert([{
                 user_id: userId,
                 amount: currentBalance,
                 method: method,
@@ -901,7 +906,6 @@
 
         showScreen('dashboard');
         await updateBalanceUI();
-        loadAdGemOfferwall();
 
         spinsLeft = localStorage.getItem(CURRENT_USER + '_spinsLeft') !== null ? parseInt(localStorage.getItem(CURRENT_USER + '_spinsLeft')) : 7;
         document.getElementById('spin-count-text').innerText = spinsLeft;
@@ -956,7 +960,7 @@
 
         if (totalActiveMinutesToday >= 120) {
             btn2hr.style.background = "var(--primary)";
-            btn2hr.style.cursor.pointer = true;
+            btn2hr.style.cursor = "pointer";
             btn2hr.removeAttribute('disabled');
             btn2hr.innerText = "Claim 120 Coins 🎉";
         }
